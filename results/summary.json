@@ -1,0 +1,73 @@
+{
+  "total_mas_recomputed": 5279,
+  "total_unique_studies": 10004,
+  "multi_ma_studies": 8271,
+  "total_overlapping_pairs": 881,
+  "contradictions": {
+    "total": 431,
+    "direct": 30,
+    "significance": 375,
+    "magnitude": 26,
+    "no_contradiction": 450,
+    "pct_of_pairs_with_any": 48.9
+  },
+  "top_contradicted_reviews": [
+    {
+      "review_id": "CD013232",
+      "n_contradictions": 172
+    },
+    {
+      "review_id": "CD014965",
+      "n_contradictions": 172
+    },
+    {
+      "review_id": "CD012712",
+      "n_contradictions": 37
+    },
+    {
+      "review_id": "CD012186",
+      "n_contradictions": 29
+    },
+    {
+      "review_id": "CD001920",
+      "n_contradictions": 27
+    },
+    {
+      "review_id": "CD015134",
+      "n_contradictions": 26
+    },
+    {
+      "review_id": "CD016131",
+      "n_contradictions": 26
+    },
+    {
+      "review_id": "CD016002",
+      "n_contradictions": 25
+    },
+    {
+      "review_id": "CD013827",
+      "n_contradictions": 24
+    },
+    {
+      "review_id": "CD004376",
+      "n_contradictions": 22
+    }
+  ],
+  "quality_correlation": {
+    "available": true,
+    "contradicted_mean_CRITICAL": 0.26,
+    "noncontradicted_mean_CRITICAL": 0.076,
+    "n_contradicted": 219,
+    "n_noncontradicted": 5060,
+    "contradicted_mean_FAIL": 0.845,
+    "noncontradicted_mean_FAIL": 0.406,
+    "contradicted_mean_WARN": 1.411,
+    "noncontradicted_mean_WARN": 0.962
+  },
+  "parameters": {
+    "min_shared_studies": 2,
+    "significance_threshold": 0.05,
+    "magnitude_ratio_threshold": 2.0,
+    "seed": 42
+  }
+}
