@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContradictionMap — Where Evidence Contradicts Itself</title>
+<style>
+/* ============================================================
+   GLOBAL STYLES + DARK THEME
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1a2e;--bg2:#16213e;--bg3:#0f3460;--card:#1e2746;
+  --text:#e8e8f0;--text2:#a0a0c0;--accent:#00d4ff;
+  --red:#ff4757;--orange:#ff9f43;--yellow:#feca57;--green:#26de81;
+  --border:#2a2a4a;--shadow:0 4px 20px rgba(0,0,0,.4);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;
+  overflow-x:hidden;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---- Layout ---- */
+.cm-container{max-width:1400px;margin:0 auto;padding:0 24px}
+section{padding:48px 0}
+h2.cm-section-title{
+  font-size:1.8rem;font-weight:700;margin-bottom:24px;
+  padding-bottom:12px;border-bottom:2px solid var(--border);
+  color:var(--accent);
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+#cm-hero{
+  background:linear-gradient(135deg,#0f3460 0%,#1a1a2e 40%,#16213e 100%);
+  text-align:center;padding:80px 24px 60px;position:relative;
+  overflow:hidden;
+}
+#cm-hero::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 30% 40%,rgba(0,212,255,.06) 0%,transparent 50%),
+             radial-gradient(circle at 70% 60%,rgba(255,71,87,.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+#cm-hero h1{font-size:2.6rem;font-weight:800;margin-bottom:8px;position:relative}
+#cm-hero h1 span{color:var(--accent)}
+#cm-hero .cm-subtitle{font-size:1.15rem;color:var(--text2);margin-bottom:32px;position:relative}
+#cm-hero .cm-big-stat{
+  font-size:5rem;font-weight:900;color:var(--red);position:relative;
+  text-shadow:0 0 40px rgba(255,71,87,.3);
+}
+#cm-hero .cm-big-stat-label{
+  font-size:1.3rem;color:var(--text);margin-top:8px;position:relative;
+}
+
+/* ============================================================
+   SUMMARY CARDS
+   ============================================================ */
+#cm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:-30px;position:relative;z-index:2}
+.cm-card{
+  background:var(--card);border-radius:12px;padding:28px 24px;text-align:center;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  transition:transform .2s,box-shadow .2s;
+}
+.cm-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.cm-card .cm-card-value{font-size:2.6rem;font-weight:800;margin-bottom:4px}
+.cm-card .cm-card-label{font-size:.95rem;color:var(--text2);font-weight:500}
+.cm-card:nth-child(1) .cm-card-value{color:var(--accent)}
+.cm-card:nth-child(2) .cm-card-value{color:var(--text)}
+.cm-card:nth-child(3) .cm-card-value{color:var(--red)}
+.cm-card:nth-child(4) .cm-card-value{color:var(--orange)}
+
+/* ============================================================
+   CHART SECTIONS
+   ============================================================ */
+.cm-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.cm-chart-row{grid-template-columns:1fr}}
+.cm-chart-box{
+  background:var(--card);border-radius:12px;padding:24px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+}
+.cm-chart-box h3{font-size:1.15rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+canvas{display:block;width:100%;border-radius:8px}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+#cm-table-section{overflow:visible}
+.cm-table-controls{
+  display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center;
+}
+.cm-table-controls input,.cm-table-controls select{
+  padding:10px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:.9rem;
+}
+.cm-table-controls input{flex:1;min-width:200px}
+.cm-table-controls select{min-width:160px}
+.cm-table-controls .cm-count{color:var(--text2);font-size:.85rem;margin-left:auto}
+#cm-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+#cm-data-table{
+  width:100%;border-collapse:collapse;font-size:.82rem;
+  background:var(--card);
+}
+#cm-data-table th{
+  background:var(--bg2);padding:10px 8px;text-align:left;font-weight:600;
+  position:sticky;top:0;cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid var(--border);user-select:none;
+}
+#cm-data-table th:hover{color:var(--accent)}
+#cm-data-table th .cm-sort-arrow{font-size:.7rem;margin-left:4px;opacity:.5}
+#cm-data-table td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}
+#cm-data-table tr:hover td{background:rgba(0,212,255,.04)}
+.cm-type-badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.cm-type-direct{background:rgba(255,71,87,.2);color:var(--red)}
+.cm-type-significance{background:rgba(255,159,67,.2);color:var(--orange)}
+.cm-type-magnitude{background:rgba(254,202,87,.2);color:var(--yellow)}
+.cm-type-none{background:rgba(38,222,129,.15);color:var(--green)}
+#cm-table-wrap{max-height:600px;overflow-y:auto}
+
+/* pagination */
+.cm-pagination{display:flex;justify-content:center;gap:4px;margin-top:16px;flex-wrap:wrap}
+.cm-pagination button{
+  padding:6px 12px;border:1px solid var(--border);background:var(--card);
+  color:var(--text);border-radius:6px;cursor:pointer;font-size:.85rem;
+}
+.cm-pagination button:hover{background:var(--bg3)}
+.cm-pagination button.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.cm-pagination button:disabled{opacity:.3;cursor:default}
+
+/* ============================================================
+   CHORD DIAGRAM
+   ============================================================ */
+#cm-chord-section .cm-chart-box{padding:16px}
+
+/* ============================================================
+   METHODOLOGY
+   ============================================================ */
+#cm-methodology{background:var(--bg2);border-radius:12px;padding:32px;border:1px solid var(--border)}
+#cm-methodology h3{color:var(--accent);margin-bottom:12px;font-size:1.1rem}
+#cm-methodology p{color:var(--text2);font-size:.92rem;margin-bottom:10px;max-width:900px}
+#cm-methodology ul{color:var(--text2);font-size:.92rem;padding-left:20px}
+#cm-methodology li{margin-bottom:6px}
+.cm-highlight{color:var(--text);font-weight:600}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+#cm-footer{text-align:center;padding:32px;color:var(--text2);font-size:.85rem;border-top:1px solid var(--border)}
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+#cm-tooltip{
+  position:fixed;pointer-events:none;z-index:1000;
+  background:rgba(22,33,62,.96);border:1px solid var(--accent);
+  border-radius:8px;padding:10px 14px;font-size:.82rem;
+  color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.5);
+  max-width:300px;opacity:0;transition:opacity .15s;
+}
+#cm-tooltip.visible{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Tooltip -->
+<div id="cm-tooltip"></div>
+
+<!-- Hero -->
+<header id="cm-hero">
+  <h1><span>ContradictionMap</span></h1>
+  <p class="cm-subtitle">Where Evidence Contradicts Itself</p>
+  <div class="cm-big-stat" id="cm-hero-pct">0%</div>
+  <p class="cm-big-stat-label">of overlapping meta-analyses contradict each other</p>
+</header>
+
+<!-- Summary Cards -->
+<section>
+  <div class="cm-container" id="cm-cards">
+    <div class="cm-card">
+      <div class="cm-card-value" id="cm-card-mas">0</div>
+      <div class="cm-card-label">Meta-Analyses Recomputed</div>
+    </div>
+    <div class="cm-card">
+      <div class="cm-card-value" id="cm-card-pairs">0</div>
+      <div class="cm-card-label">Overlapping Pairs Examined</div>
+    </div>
+    <div class="cm-card">
+      <div class="cm-card-value" id="cm-card-contra">0</div>
+      <div class="cm-card-label">Contradictions Found</div>
+    </div>
+    <div class="cm-card">
+      <div class="cm-card-value" id="cm-card-rate">0%</div>
+      <div class="cm-card-label">Contradiction Rate</div>
+    </div>
+  </div>
+</section>
+
+<!-- Contradiction Breakdown + Top Reviews -->
+<section>
+  <div class="cm-container">
+    <h2 class="cm-section-title">Contradiction Analysis</h2>
+    <div class="cm-chart-row">
+      <div class="cm-chart-box">
+        <h3>Contradiction Type Breakdown</h3>
+        <canvas id="cm-donut" width="500" height="400"></canvas>
+      </div>
+      <div class="cm-chart-box">
+        <h3>Top 10 Most Contradicted Reviews</h3>
+        <canvas id="cm-bar-reviews" width="500" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quality Correlation -->
+<section>
+  <div class="cm-container">
+    <h2 class="cm-section-title">Quality-Contradiction Correlation</h2>
+    <div class="cm-chart-row">
+      <div class="cm-chart-box">
+        <h3>Mean Audit Flags: Contradicted vs Non-Contradicted MAs</h3>
+        <canvas id="cm-quality-bar" width="500" height="380"></canvas>
+      </div>
+      <div class="cm-chart-box" style="display:flex;flex-direction:column;justify-content:center">
+        <h3>Key Finding</h3>
+        <p style="color:var(--text2);font-size:1rem;margin-bottom:16px">
+          Meta-analyses involved in contradictions have significantly more audit quality flags than non-contradicted ones.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="cm-card" style="padding:20px">
+            <div class="cm-card-value" style="font-size:2rem;color:var(--red)">3.4x</div>
+            <div class="cm-card-label">More CRITICAL flags</div>
+          </div>
+          <div class="cm-card" style="padding:20px">
+            <div class="cm-card-value" style="font-size:2rem;color:var(--orange)">2.1x</div>
+            <div class="cm-card-label">More FAIL flags</div>
+          </div>
+          <div class="cm-card" style="padding:20px">
+            <div class="cm-card-value" style="font-size:1.6rem;color:var(--accent)">219</div>
+            <div class="cm-card-label">Contradicted MAs</div>
+          </div>
+          <div class="cm-card" style="padding:20px">
+            <div class="cm-card-value" style="font-size:1.6rem;color:var(--green)">5,060</div>
+            <div class="cm-card-label">Non-Contradicted MAs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Data Table -->
+<section id="cm-table-section">
+  <div class="cm-container">
+    <h2 class="cm-section-title">Interactive Data Explorer</h2>
+    <div class="cm-table-controls">
+      <input type="text" id="cm-search" placeholder="Search by review ID, MA ID, or measure...">
+      <select id="cm-filter-type">
+        <option value="all">All Types</option>
+        <option value="direct">Direct</option>
+        <option value="significance">Significance</option>
+        <option value="magnitude">Magnitude</option>
+        <option value="none">No Contradiction</option>
+      </select>
+      <span class="cm-count" id="cm-row-count">Showing 881 of 881</span>
+    </div>
+    <div id="cm-table-wrap">
+      <table id="cm-data-table">
+        <thead>
+          <tr>
+            <th data-col="0">MA 1 <span class="cm-sort-arrow"></span></th>
+            <th data-col="1">MA 2 <span class="cm-sort-arrow"></span></th>
+            <th data-col="4">Type <span class="cm-sort-arrow"></span></th>
+            <th data-col="5">Effect 1 <span class="cm-sort-arrow"></span></th>
+            <th data-col="6">Effect 2 <span class="cm-sort-arrow"></span></th>
+            <th data-col="7">p1 <span class="cm-sort-arrow"></span></th>
+            <th data-col="8">p2 <span class="cm-sort-arrow"></span></th>
+            <th data-col="11">Shared <span class="cm-sort-arrow"></span></th>
+            <th data-col="12">Jaccard <span class="cm-sort-arrow"></span></th>
+            <th data-col="17">Measure 1 <span class="cm-sort-arrow"></span></th>
+            <th data-col="18">Measure 2 <span class="cm-sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="cm-tbody"></tbody>
+      </table>
+    </div>
+    <div class="cm-pagination" id="cm-pagination"></div>
+  </div>
+</section>
+
+<!-- Chord Diagram -->
+<section id="cm-chord-section">
+  <div class="cm-container">
+    <h2 class="cm-section-title">Contradiction Network (Top 20 Reviews)</h2>
+    <div class="cm-chart-box" style="text-align:center">
+      <canvas id="cm-chord" width="700" height="700"></canvas>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:12px">
+        Arcs connect reviews that share contradicting meta-analyses. Thickness proportional to contradiction count.
+        <span style="color:var(--red)">Red = direct</span>,
+        <span style="color:var(--orange)">Orange = significance</span>,
+        <span style="color:var(--yellow)">Yellow = magnitude</span>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Methodology -->
+<section>
+  <div class="cm-container">
+    <div id="cm-methodology">
+      <h3>Methodology</h3>
+      <p>
+        ContradictionMap systematically identifies contradictions between overlapping meta-analyses
+        within and across Cochrane systematic reviews. The pipeline recomputes
+        <span class="cm-highlight">5,279 meta-analyses</span> from
+        <span class="cm-highlight">501 reviews</span>, identifies
+        <span class="cm-highlight">881 overlapping pairs</span> (sharing at least 2 primary studies),
+        and classifies each pair into one of three contradiction types:
+      </p>
+      <ul>
+        <li><span class="cm-highlight" style="color:var(--red)">Direct contradiction</span> &mdash;
+            Effect estimates point in opposite directions (one harmful, one protective) and both are statistically significant.</li>
+        <li><span class="cm-highlight" style="color:var(--orange)">Significance contradiction</span> &mdash;
+            Effects point in the same direction but one is statistically significant (p &lt; 0.05) and the other is not.</li>
+        <li><span class="cm-highlight" style="color:var(--yellow)">Magnitude contradiction</span> &mdash;
+            Both significant and same direction, but effect sizes differ by more than 2-fold.</li>
+      </ul>
+      <p style="margin-top:12px">
+        Overlap is measured by the <span class="cm-highlight">Jaccard index</span> of shared primary studies.
+        Quality correlation uses audit flags from the MetaAudit pipeline (CRITICAL, FAIL, WARN severity levels).
+        All analyses use a fixed random seed (42) for reproducibility.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer id="cm-footer">
+  ContradictionMap &mdash; Systematic analysis of evidence contradictions in Cochrane reviews<br>
+  Data: 501 reviews, 5,279 meta-analyses, 10,004 unique studies &mdash; Generated 2026
+</footer>
+
+<script>
+/* ============================================================
+   DATA — injected by build step
+   ============================================================ */
+// Column indices: 0=ma_id_1, 1=ma_id_2, 2=review_id_1, 3=review_id_2,
+// 4=contradiction_type, 5=effect_1, 6=effect_2, 7=p_1, 8=p_2,
+// 9=sig_1, 10=sig_2, 11=n_shared, 12=jaccard,
+// 13=outcome_1, 14=outcome_2, 15=comparison_1, 16=comparison_2,
+// 17=measure_1, 18=measure_2
+var CM_DATA = [["CD011381__A1","CD012186__A2","CD011381","CD012186","significance",0.000693,0.317869,0.994997,7.8e-05,false,true,40,0.367,"","","","","logOR","logOR"],["CD011381__A2","CD012186__A2","CD011381","CD012186","direct",-0.196736,0.317869,0.010968,7.8e-05,true,true,40,0.3636,"","","","","logOR","logOR"],["CD011381__A2","CD012186__A1","CD011381","CD012186","significance",-0.196736,0.009306,0.010968,0.769412,true,false,32,0.3265,"","","","","logOR","logOR"],["CD011381__A1","CD012186__A1","CD011381","CD012186","none",0.000693,0.009306,0.994997,0.769412,false,false,31,0.3163,"","","","","logOR","logOR"],["CD011381__A4","CD012186__A2","CD011381","CD012186","direct",-0.205246,0.317869,0.036781,7.8e-05,true,true,27,0.2477,"","","","","logOR","logOR"],["CD011381__A11","CD012186__A1","CD011381","CD012186","none",-0.131037,0.009306,0.598491,0.769412,false,false,26,0.2989,"","","","","logOR","logOR"],["CD011381__A11","CD012186__A2","CD011381","CD012186","significance",-0.131037,0.317869,0.598491,7.8e-05,false,true,26,0.243,"","","","","logOR","logOR"],["CD011381__A4","CD012186__A1","CD011381","CD012186","significance",-0.205246,0.009306,0.036781,0.769412,true,false,20,0.2083,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A2","CD012186","CD015443","significance",0.317869,0.313808,7.8e-05,0.086845,true,false,16,0.1468,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A10","CD012186","CD015443","significance",0.317869,-0.219329,7.8e-05,0.449851,true,false,13,0.1215,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A1","CD013232","CD014965","none",-0.014119,0.601531,0.948799,0.07231,false,false,12,0.15,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A1","CD012186","CD015443","significance",0.317869,-0.110497,7.8e-05,0.425953,true,false,12,0.1101,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A1","CD013232","CD014965","significance",-0.857054,0.601531,0.000107,0.07231,true,false,11,0.4783,"","","","","logOR","logOR"],["CD011381__A3","CD012186__A2","CD011381","CD012186","significance",0.033334,0.317869,0.901731,7.8e-05,false,true,11,0.1038,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A1","CD013232","CD014965","significance",0.22549,0.601531,0.00607,0.07231,true,false,10,0.1724,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A1","CD013232","CD014965","significance",0.515932,0.601531,0.0,0.07231,true,false,10,0.1667,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A7","CD013232","CD014965","none",-0.014119,0.135131,0.948799,0.810103,false,false,10,0.1299,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A1","CD013232","CD014965","significance",0.707465,0.601531,2e-06,0.07231,true,false,9,0.2812,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A5","CD013232","CD014965","significance",-0.014119,0.951587,0.948799,0.009846,false,true,9,0.1169,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A1","CD012186","CD015443","none",0.009306,-0.110497,0.769412,0.425953,false,false,9,0.0978,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A2","CD012186","CD015443","none",0.009306,0.313808,0.769412,0.086845,false,false,9,0.0938,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A4","CD012186","CD015443","direct",0.317869,-0.299748,7.8e-05,0.016008,true,true,9,0.0841,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A1","CD013232","CD014965","none",-0.332785,0.601531,0.548525,0.07231,false,false,8,0.4211,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A7","CD013232","CD014965","significance",-0.857054,0.135131,0.000107,0.810103,true,false,8,0.381,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A5","CD013232","CD014965","magnitude",0.22549,0.951587,0.00607,0.009846,true,true,8,0.1481,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A7","CD013232","CD014965","significance",0.22549,0.135131,0.00607,0.810103,true,false,8,0.1455,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A5","CD013232","CD014965","none",0.515932,0.951587,0.0,0.009846,true,true,8,0.1429,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A7","CD013232","CD014965","significance",0.515932,0.135131,0.0,0.810103,true,false,8,0.1404,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A6","CD013232","CD014965","none",-0.014119,0.222912,0.948799,0.672617,false,false,8,0.1053,"","","","","logOR","logOR"],["CD011381__A3","CD012186__A1","CD011381","CD012186","none",0.033334,0.009306,0.901731,0.769412,false,false,8,0.0899,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A10","CD012186","CD015443","none",0.009306,-0.219329,0.769412,0.449851,false,false,8,0.087,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A7","CD013232","CD014965","none",-0.346641,0.135131,0.547215,0.810103,false,false,7,0.5,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A7","CD013232","CD014965","none",-0.332785,0.135131,0.548525,0.810103,false,false,7,0.4667,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A24","CD013232","CD014965","significance",-0.857054,-0.016582,0.000107,0.982063,true,false,7,0.3684,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A25","CD013232","CD014965","significance",-0.857054,-0.007999,0.000107,0.991347,true,false,7,0.3684,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A26","CD013232","CD014965","significance",-0.857054,-0.011412,0.000107,0.987655,true,false,7,0.3684,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A1","CD013232","CD014965","none",-0.346641,0.601531,0.547215,0.07231,false,false,7,0.3684,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A5","CD013232","CD014965","direct",-0.857054,0.951587,0.000107,0.009846,true,true,7,0.3333,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A5","CD013232","CD014965","none",0.707465,0.951587,2e-06,0.009846,true,true,7,0.25,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A7","CD013232","CD014965","significance",0.707465,0.135131,2e-06,0.810103,true,false,7,0.2414,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A24","CD013232","CD014965","none",-0.014119,-0.016582,0.948799,0.982063,false,false,7,0.0909,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A25","CD013232","CD014965","none",-0.014119,-0.007999,0.948799,0.991347,false,false,7,0.0909,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A26","CD013232","CD014965","none",-0.014119,-0.011412,0.948799,0.987655,false,false,7,0.0909,"","","","","logOR","logOR"],["CD011535__A4","CD014741__A4","CD011535","CD014741","significance",2.010845,-0.138152,0.0,0.328936,true,false,7,0.0897,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A2","CD013232","CD014965","significance",-0.014119,0.871271,0.948799,0.014083,false,true,7,0.0875,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A3","CD013232","CD014965","none",-0.014119,0.668097,0.948799,0.067291,false,false,7,0.0875,"","","","","logOR","logOR"],["CD011535__A4","CD014741__A5","CD011535","CD014741","significance",2.010845,-0.281322,0.0,0.344391,true,false,7,0.0843,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A1","CD001920","CD016002","none",-0.04745,-0.302791,0.73578,0.320354,false,false,7,0.047,"","","","","logOR","logOR"],["CD006919__A2","CD012586__A1","CD006919","CD012586","none",0.070701,-0.025822,0.479053,0.31709,false,false,7,0.0455,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A1","CD001920","CD016002","none",-0.04649,-0.302791,0.719873,0.320354,false,false,7,0.0422,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A24","CD013232","CD014965","none",-0.346641,-0.016582,0.547215,0.982063,false,false,6,0.5,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A25","CD013232","CD014965","none",-0.346641,-0.007999,0.547215,0.991347,false,false,6,0.5,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A26","CD013232","CD014965","none",-0.346641,-0.011412,0.547215,0.987655,false,false,6,0.5,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A24","CD013232","CD014965","none",-0.332785,-0.016582,0.548525,0.982063,false,false,6,0.4615,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A25","CD013232","CD014965","none",-0.332785,-0.007999,0.548525,0.991347,false,false,6,0.4615,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A26","CD013232","CD014965","none",-0.332785,-0.011412,0.548525,0.987655,false,false,6,0.4615,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A5","CD013232","CD014965","significance",-0.346641,0.951587,0.547215,0.009846,false,true,6,0.4286,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A5","CD013232","CD014965","significance",-0.332785,0.951587,0.548525,0.009846,false,true,6,0.4,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A14","CD013232","CD014965","direct",-0.857054,1.530006,0.000107,0.001691,true,true,6,0.3,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A6","CD013232","CD014965","significance",-0.857054,0.222912,0.000107,0.672617,true,false,6,0.3,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A3","CD013232","CD014965","significance",-0.857054,0.668097,0.000107,0.067291,true,false,6,0.2609,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A24","CD013232","CD014965","significance",0.707465,-0.016582,2e-06,0.982063,true,false,6,0.2222,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A25","CD013232","CD014965","significance",0.707465,-0.007999,2e-06,0.991347,true,false,6,0.2222,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A26","CD013232","CD014965","significance",0.707465,-0.011412,2e-06,0.987655,true,false,6,0.2222,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A24","CD013232","CD014965","significance",0.22549,-0.016582,0.00607,0.982063,true,false,6,0.1111,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A25","CD013232","CD014965","significance",0.22549,-0.007999,0.00607,0.991347,true,false,6,0.1111,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A26","CD013232","CD014965","significance",0.22549,-0.011412,0.00607,0.987655,true,false,6,0.1111,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A6","CD013232","CD014965","significance",0.22549,0.222912,0.00607,0.672617,true,false,6,0.1111,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A24","CD013232","CD014965","significance",0.515932,-0.016582,0.0,0.982063,true,false,6,0.1071,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A25","CD013232","CD014965","significance",0.515932,-0.007999,0.0,0.991347,true,false,6,0.1071,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A26","CD013232","CD014965","significance",0.515932,-0.011412,0.0,0.987655,true,false,6,0.1071,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A6","CD013232","CD014965","significance",0.515932,0.222912,0.0,0.672617,true,false,6,0.1071,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A3","CD013232","CD014965","significance",0.22549,0.668097,0.00607,0.067291,true,false,6,0.1053,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A24","CD013232","CD014965","none",0.195297,-0.016582,0.056101,0.982063,false,false,6,0.1034,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A25","CD013232","CD014965","none",0.195297,-0.007999,0.056101,0.991347,false,false,6,0.1034,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A26","CD013232","CD014965","none",0.195297,-0.011412,0.056101,0.987655,false,false,6,0.1034,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A3","CD013232","CD014965","significance",0.515932,0.668097,0.0,0.067291,true,false,6,0.1017,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A7","CD013232","CD014965","none",0.05166,0.135131,0.469888,0.810103,false,false,6,0.1,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A7","CD013232","CD014965","none",0.195297,0.135131,0.056101,0.810103,false,false,6,0.0984,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A1","CD013232","CD014965","none",0.05166,0.601531,0.469888,0.07231,false,false,6,0.0923,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A1","CD013232","CD014965","none",0.195297,0.601531,0.056101,0.07231,false,false,6,0.0909,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A4","CD013232","CD014965","none",-0.014119,-0.173071,0.948799,0.772996,false,false,6,0.0779,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A14","CD013232","CD014965","significance",-0.014119,1.530006,0.948799,0.001691,false,true,6,0.0769,"","","","","logOR","logOR"],["CD004307__A2","CD015120__A1","CD004307","CD015120","significance",0.671785,0.402235,0.0,0.117576,true,false,6,0.0667,"","","","","logOR","logOR"],["CD004307__A1","CD015120__A1","CD004307","CD015120","significance",0.581527,0.402235,0.0,0.117576,true,false,6,0.0652,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A5","CD012186","CD015443","direct",0.317869,-0.364946,7.8e-05,0.044321,true,true,6,0.0566,"","","","","logOR","logOR"],["CD006919__A4","CD012586__A1","CD006919","CD012586","significance",0.338216,-0.025822,0.011799,0.31709,true,false,6,0.0366,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A14","CD013232","CD014965","significance",-0.346641,1.530006,0.547215,0.001691,false,true,5,0.3846,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A6","CD013232","CD014965","none",-0.346641,0.222912,0.547215,0.672617,false,false,5,0.3846,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A14","CD013232","CD014965","significance",-0.332785,1.530006,0.548525,0.001691,false,true,5,0.3571,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A6","CD013232","CD014965","none",-0.332785,0.222912,0.548525,0.672617,false,false,5,0.3571,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A13","CD013232","CD014965","direct",-0.857054,1.876395,0.000107,0.002282,true,true,5,0.2632,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A2","CD013232","CD014965","direct",-0.857054,0.871271,0.000107,0.014083,true,true,5,0.2083,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A13","CD013232","CD014965","magnitude",0.707465,1.876395,2e-06,0.002282,true,true,5,0.1923,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A14","CD013232","CD014965","magnitude",0.707465,1.530006,2e-06,0.001691,true,true,5,0.1786,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A6","CD013232","CD014965","significance",0.707465,0.222912,2e-06,0.672617,true,false,5,0.1786,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A3","CD013232","CD014965","significance",0.707465,0.668097,2e-06,0.067291,true,false,5,0.1613,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A13","CD013232","CD014965","magnitude",0.22549,1.876395,0.00607,0.002282,true,true,5,0.0943,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A4","CD013232","CD014965","significance",0.22549,-0.173071,0.00607,0.772996,true,false,5,0.0926,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A13","CD013232","CD014965","magnitude",0.515932,1.876395,0.0,0.002282,true,true,5,0.0909,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A14","CD013232","CD014965","magnitude",0.22549,1.530006,0.00607,0.001691,true,true,5,0.0909,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A4","CD013232","CD014965","significance",0.515932,-0.173071,0.0,0.772996,true,false,5,0.0893,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A14","CD013232","CD014965","magnitude",0.515932,1.530006,0.0,0.001691,true,true,5,0.0877,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A24","CD013232","CD014965","none",0.05166,-0.016582,0.469888,0.982063,false,false,5,0.0862,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A25","CD013232","CD014965","none",0.05166,-0.007999,0.469888,0.991347,false,false,5,0.0862,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A26","CD013232","CD014965","none",0.05166,-0.011412,0.469888,0.987655,false,false,5,0.0862,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A2","CD013232","CD014965","magnitude",0.22549,0.871271,0.00607,0.014083,true,true,5,0.0862,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A14","CD013232","CD014965","significance",0.195297,1.530006,0.056101,0.001691,false,true,5,0.0847,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A2","CD013232","CD014965","none",0.515932,0.871271,0.0,0.014083,true,true,5,0.0833,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A5","CD013232","CD014965","significance",0.05166,0.951587,0.469888,0.009846,false,true,5,0.0833,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A5","CD013232","CD014965","significance",0.195297,0.951587,0.056101,0.009846,false,true,5,0.082,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A5","CD013232","CD014965","magnitude",0.342491,0.951587,2e-06,0.009846,true,true,5,0.0746,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A7","CD013232","CD014965","significance",0.342491,0.135131,2e-06,0.810103,true,false,5,0.0735,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A1","CD013232","CD014965","significance",0.342491,0.601531,2e-06,0.07231,true,false,5,0.0685,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A13","CD013232","CD014965","significance",-0.014119,1.876395,0.948799,0.002282,false,true,5,0.0649,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A4","CD012186","CD015443","significance",0.009306,-0.299748,0.769412,0.016008,false,true,5,0.0549,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A2","CD001920","CD016002","significance",-0.218259,0.444048,0.093125,0.041514,false,true,5,0.049,"","","","","logOR","MD"],["CD001920__A5","CD016002__A1","CD001920","CD016002","none",-0.218259,-0.302791,0.093125,0.320354,false,false,5,0.0435,"","","","","logOR","logOR"],["CD001920__A1","CD016002__A2","CD001920","CD016002","significance",-0.042121,0.444048,0.757753,0.041514,false,true,5,0.0397,"","","","","logOR","MD"],["CD001920__A2","CD016002__A2","CD001920","CD016002","significance",-0.05989,0.444048,0.620428,0.041514,false,true,5,0.0379,"","","","","logOR","MD"],["CD001920__A3","CD016002__A2","CD001920","CD016002","significance",-0.04745,0.444048,0.73578,0.041514,false,true,5,0.0362,"","","","","logOR","MD"],["CD001920__A1","CD016002__A1","CD001920","CD016002","none",-0.042121,-0.302791,0.757753,0.320354,false,false,5,0.036,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A16","CD001920","CD016002","significance",-0.04745,1.048288,0.73578,0.024124,false,true,5,0.0355,"","","","","logOR","MD"],["CD006919__A7","CD012586__A1","CD006919","CD012586","none",-0.346547,-0.025822,0.238832,0.31709,false,false,5,0.0355,"","","","","logOR","logOR"],["CD001920__A2","CD016002__A1","CD001920","CD016002","none",-0.05989,-0.302791,0.620428,0.320354,false,false,5,0.0345,"","","","","logOR","logOR"],["CD006919__A5","CD012586__A1","CD006919","CD012586","none",0.092274,-0.025822,0.719812,0.31709,false,false,5,0.0333,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A2","CD001920","CD016002","significance",-0.04649,0.444048,0.719873,0.041514,false,true,5,0.0323,"","","","","logOR","MD"],["CD001920__A4","CD016002__A15","CD001920","CD016002","significance",-0.04649,29.234099,0.719873,0.00071,false,true,5,0.0318,"","","","","logOR","MD"],["CD013232__A19","CD014965__A27","CD013232","CD014965","none",-0.332785,-0.057964,0.548525,0.957947,false,false,4,0.3636,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A13","CD013232","CD014965","significance",-0.346641,1.876395,0.547215,0.002282,false,true,4,0.3333,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A13","CD013232","CD014965","significance",-0.332785,1.876395,0.548525,0.002282,false,true,4,0.3077,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A4","CD013232","CD014965","none",-0.346641,-0.173071,0.547215,0.772996,false,false,4,0.3077,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A4","CD013232","CD014965","none",-0.332785,-0.173071,0.548525,0.772996,false,false,4,0.2857,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A27","CD013232","CD014965","significance",-0.857054,-0.057964,0.000107,0.957947,true,false,4,0.2222,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A18","CD013232","CD014965","direct",-0.857054,1.405417,0.000107,0.032173,true,true,4,0.2105,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A19","CD013232","CD014965","direct",-0.857054,1.760203,0.000107,0.048918,true,true,4,0.2105,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A15","CD013232","CD014965","significance",-0.857054,-0.218985,0.000107,0.548795,true,false,4,0.2,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A4","CD013232","CD014965","significance",-0.857054,-0.173071,0.000107,0.772996,true,false,4,0.1905,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A4","CD013232","CD014965","significance",0.707465,-0.173071,2e-06,0.772996,true,false,4,0.1429,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A2","CD013232","CD014965","none",0.707465,0.871271,2e-06,0.014083,true,true,4,0.125,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A5","CD013232","CD014965","magnitude",0.359871,0.951587,0.001476,0.009846,true,true,4,0.1212,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A7","CD013232","CD014965","significance",0.359871,0.135131,0.001476,0.810103,true,false,4,0.1176,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A1","CD013232","CD014965","significance",0.359871,0.601531,0.001476,0.07231,true,false,4,0.1026,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A9","CD013232","CD014965","significance",0.515932,0.591308,0.0,0.455908,true,false,4,0.0741,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A13","CD013232","CD014965","significance",0.195297,1.876395,0.056101,0.002282,false,true,4,0.069,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A14","CD013232","CD014965","significance",0.05166,1.530006,0.469888,0.001691,false,true,4,0.0678,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A6","CD013232","CD014965","none",0.05166,0.222912,0.469888,0.672617,false,false,4,0.0678,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A6","CD013232","CD014965","none",0.195297,0.222912,0.056101,0.672617,false,false,4,0.0667,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A5","CD013232","CD014965","significance",0.125876,0.951587,0.361807,0.009846,false,true,4,0.0635,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A7","CD013232","CD014965","none",0.125876,0.135131,0.361807,0.810103,false,false,4,0.0625,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A4","CD013232","CD014965","significance",0.342491,-0.173071,2e-06,0.772996,true,false,4,0.0615,"","","","","logOR","logOR"],["CD011535__A3","CD014741__A4","CD011535","CD014741","significance",-0.918465,-0.138152,0.040166,0.328936,true,false,4,0.0606,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A6","CD013232","CD014965","significance",0.342491,0.222912,2e-06,0.672617,true,false,4,0.0606,"","","","","logOR","logOR"],["CD011535__A4","CD014741__A3","CD011535","CD014741","magnitude",2.010845,0.327701,0.0,0.009291,true,true,4,0.058,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A1","CD013232","CD014965","none",0.125876,0.601531,0.361807,0.07231,false,false,4,0.058,"","","","","logOR","logOR"],["CD011535__A3","CD014741__A5","CD011535","CD014741","significance",-0.918465,-0.281322,0.040166,0.344391,true,false,4,0.0563,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A27","CD013232","CD014965","none",-0.014119,-0.057964,0.948799,0.957947,false,false,4,0.0526,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A9","CD013232","CD014965","none",-0.014119,0.591308,0.948799,0.455908,false,false,4,0.0526,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A18","CD013232","CD014965","significance",-0.014119,1.405417,0.948799,0.032173,false,true,4,0.0519,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A19","CD013232","CD014965","significance",-0.014119,1.760203,0.948799,0.048918,false,true,4,0.0519,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A15","CD013232","CD014965","none",-0.014119,-0.218985,0.948799,0.548795,false,false,4,0.0513,"","","","","logOR","logOR"],["CD001155__A2","CD003376__A2","CD001155","CD003376","significance",-0.08039,-0.031418,1.5e-05,0.723294,true,false,4,0.0488,"","","","","logOR","logOR"],["CD011381__A5","CD012186__A1","CD011381","CD012186","none",0.384428,0.009306,0.299366,0.769412,false,false,4,0.0471,"","","","","logOR","logOR"],["CD011381__A10","CD012186__A1","CD011381","CD012186","none",-0.55488,0.009306,0.569342,0.769412,false,false,4,0.0465,"","","","","logOR","logOR"],["CD011381__A8","CD012186__A1","CD011381","CD012186","none",-0.404547,0.009306,0.675108,0.769412,false,false,4,0.0465,"","","","","logOR","logOR"],["CD004307__A3","CD015120__A1","CD004307","CD015120","none",0.076387,0.402235,0.773377,0.117576,false,false,4,0.0455,"","","","","logOR","logOR"],["CD011381__A5","CD012186__A2","CD011381","CD012186","significance",0.384428,0.317869,0.299366,7.8e-05,false,true,4,0.0381,"","","","","logOR","logOR"],["CD011381__A10","CD012186__A2","CD011381","CD012186","significance",-0.55488,0.317869,0.569342,7.8e-05,false,true,4,0.0377,"","","","","logOR","logOR"],["CD011381__A8","CD012186__A2","CD011381","CD012186","significance",-0.404547,0.317869,0.675108,7.8e-05,false,true,4,0.0377,"","","","","logOR","logOR"],["CD012186__A2","CD015443__A3","CD012186","CD015443","significance",0.317869,-0.361814,7.8e-05,0.058275,true,false,4,0.0377,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A2","CD001920","CD016002","significance",0.144147,0.444048,0.307436,0.041514,false,true,4,0.0328,"","","","","logOR","MD"],["CD001920__A6","CD016002__A1","CD001920","CD016002","none",0.144147,-0.302791,0.307436,0.320354,false,false,4,0.0296,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A15","CD001920","CD016002","significance",-0.04745,29.234099,0.73578,0.00071,false,true,4,0.0284,"","","","","logOR","MD"],["CD001920__A4","CD016002__A13","CD001920","CD016002","significance",-0.04649,0.076513,0.719873,0.006883,false,true,4,0.0256,"","","","","logOR","MD"],["CD001920__A4","CD016002__A16","CD001920","CD016002","significance",-0.04649,1.048288,0.719873,0.024124,false,true,4,0.0252,"","","","","logOR","MD"],["CD004376__A2","CD006185__A7","CD004376","CD006185","significance",-4.881495,-0.104059,0.0,0.349626,true,false,4,0.0182,"","","","","MD","logOR"],["CD004376__A2","CD006185__A8","CD004376","CD006185","significance",-4.881495,-0.059429,0.0,0.76575,true,false,4,0.0182,"","","","","MD","logOR"],["CD004376__A5","CD006185__A7","CD004376","CD006185","none",-0.018535,-0.104059,0.756906,0.349626,false,false,4,0.0177,"","","","","logOR","logOR"],["CD004376__A5","CD006185__A8","CD004376","CD006185","none",-0.018535,-0.059429,0.756906,0.76575,false,false,4,0.0177,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A6","CD015134","CD016131","direct",-0.662522,0.094095,0.040579,0.012777,true,true,3,0.4286,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A6","CD015134","CD016131","significance",0.244002,0.094095,0.460379,0.012777,false,true,3,0.4286,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A6","CD015134","CD016131","significance",-0.049953,0.094095,0.421464,0.012777,false,true,3,0.4286,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A6","CD015134","CD016131","significance",-0.127837,0.094095,0.693148,0.012777,false,true,3,0.375,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A6","CD015134","CD016131","significance",0.159973,0.094095,0.120461,0.012777,false,true,3,0.3333,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A6","CD015134","CD016131","significance",-0.283064,0.094095,0.343008,0.012777,false,true,3,0.3333,"","","","","logOR","logOR"],["CD013052__A3","CD013053__A2","CD013052","CD013053","significance",-0.036515,1.656861,0.815243,0.002689,false,true,3,0.2727,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A20","CD013232","CD014965","none",-0.346641,0.31261,0.547215,0.70251,false,false,3,0.2727,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A27","CD013232","CD014965","none",-0.346641,-0.057964,0.547215,0.957947,false,false,3,0.2727,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A9","CD013232","CD014965","none",-0.346641,0.591308,0.547215,0.455908,false,false,3,0.2727,"","","","","logOR","logOR"],["CD013052__A3","CD013053__A1","CD013052","CD013053","significance",-0.036515,1.681001,0.815243,0.000776,false,true,3,0.25,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A20","CD013232","CD014965","none",-0.332785,0.31261,0.548525,0.70251,false,false,3,0.25,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A9","CD013232","CD014965","none",-0.332785,0.591308,0.548525,0.455908,false,false,3,0.25,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A18","CD013232","CD014965","significance",-0.346641,1.405417,0.547215,0.032173,false,true,3,0.25,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A19","CD013232","CD014965","significance",-0.346641,1.760203,0.547215,0.048918,false,true,3,0.25,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A18","CD013232","CD014965","significance",-0.332785,1.405417,0.548525,0.032173,false,true,3,0.2308,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A19","CD013232","CD014965","significance",-0.332785,1.760203,0.548525,0.048918,false,true,3,0.2308,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A15","CD013232","CD014965","none",-0.346641,-0.218985,0.547215,0.548795,false,false,3,0.2308,"","","","","logOR","logOR"],["CD007110__A3","CD010533__A1","CD007110","CD010533","none",0.082265,-0.022203,0.852744,0.956539,false,false,3,0.2143,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A15","CD013232","CD014965","none",-0.332785,-0.218985,0.548525,0.548795,false,false,3,0.2143,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A2","CD015134","CD016131","none",-0.662522,-0.98943,0.040579,1e-05,true,true,3,0.2143,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A2","CD015134","CD016131","significance",0.244002,-0.98943,0.460379,1e-05,false,true,3,0.2143,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A2","CD015134","CD016131","significance",-0.049953,-0.98943,0.421464,1e-05,false,true,3,0.2143,"","","","","logOR","logOR"],["CD015518__A4","CD015519__A3","CD015518","CD015519","none",-0.063642,0.015913,0.911193,0.982799,false,false,3,0.2143,"","","","","logOR","logOR"],["CD007110__A1","CD010533__A1","CD007110","CD010533","none",0.062176,-0.022203,0.867339,0.956539,false,false,3,0.2,"","","","","logOR","logOR"],["CD007110__A2","CD010533__A1","CD007110","CD010533","none",0.134358,-0.022203,0.694805,0.956539,false,false,3,0.2,"","","","","logOR","logOR"],["CD007110__A3","CD010533__A2","CD007110","CD010533","none",0.082265,0.014131,0.852744,0.974525,false,false,3,0.2,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A1","CD015134","CD016131","none",-0.662522,-0.948512,0.040579,9.5e-05,true,true,3,0.2,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A1","CD015134","CD016131","significance",0.244002,-0.948512,0.460379,9.5e-05,false,true,3,0.2,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A2","CD015134","CD016131","significance",-0.127837,-0.98943,0.693148,1e-05,false,true,3,0.2,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A1","CD015134","CD016131","significance",-0.049953,-0.948512,0.421464,9.5e-05,false,true,3,0.2,"","","","","logOR","logOR"],["CD015518__A4","CD015519__A1","CD015518","CD015519","none",-0.063642,-0.00668,0.911193,0.990662,false,false,3,0.2,"","","","","logOR","logOR"],["CD015518__A4","CD015519__A2","CD015518","CD015519","none",-0.063642,0.023964,0.911193,0.970811,false,false,3,0.2,"","","","","logOR","logOR"],["CD007110__A1","CD010533__A2","CD007110","CD010533","none",0.062176,0.014131,0.867339,0.974525,false,false,3,0.1875,"","","","","logOR","logOR"],["CD007110__A2","CD010533__A2","CD007110","CD010533","none",0.134358,0.014131,0.694805,0.974525,false,false,3,0.1875,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A1","CD015134","CD016131","significance",-0.127837,-0.948512,0.693148,9.5e-05,false,true,3,0.1875,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A2","CD015134","CD016131","significance",0.159973,-0.98943,0.120461,1e-05,false,true,3,0.1875,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A2","CD015134","CD016131","significance",-0.283064,-0.98943,0.343008,1e-05,false,true,3,0.1875,"","","","","logOR","logOR"],["CD015518__A1","CD015519__A3","CD015518","CD015519","none",-0.057668,0.015913,0.788945,0.982799,false,false,3,0.1875,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A1","CD015134","CD016131","significance",0.159973,-0.948512,0.120461,9.5e-05,false,true,3,0.1765,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A1","CD015134","CD016131","significance",-0.283064,-0.948512,0.343008,9.5e-05,false,true,3,0.1765,"","","","","logOR","logOR"],["CD015518__A1","CD015519__A1","CD015518","CD015519","none",-0.057668,-0.00668,0.788945,0.990662,false,false,3,0.1765,"","","","","logOR","logOR"],["CD015518__A1","CD015519__A2","CD015518","CD015519","none",-0.057668,0.023964,0.788945,0.970811,false,false,3,0.1765,"","","","","logOR","logOR"],["CD015518__A2","CD015519__A3","CD015518","CD015519","none",-0.03416,0.015913,0.879849,0.982799,false,false,3,0.1765,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A2","CD013232","CD014965","significance",-0.346641,0.871271,0.547215,0.014083,false,true,3,0.1667,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A3","CD013232","CD014965","none",-0.346641,0.668097,0.547215,0.067291,false,false,3,0.1667,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A22","CD013232","CD014965","significance",-0.857054,1.685352,0.000107,0.166542,true,false,3,0.1667,"","","","","logOR","logOR"],["CD015518__A2","CD015519__A1","CD015518","CD015519","none",-0.03416,-0.00668,0.879849,0.990662,false,false,3,0.1667,"","","","","logOR","logOR"],["CD015518__A2","CD015519__A2","CD015518","CD015519","none",-0.03416,0.023964,0.879849,0.970811,false,false,3,0.1667,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A20","CD013232","CD014965","significance",-0.857054,0.31261,0.000107,0.70251,true,false,3,0.1579,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A9","CD013232","CD014965","significance",-0.857054,0.591308,0.000107,0.455908,true,false,3,0.1579,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A2","CD013232","CD014965","significance",-0.332785,0.871271,0.548525,0.014083,false,true,3,0.1579,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A3","CD013232","CD014965","none",-0.332785,0.668097,0.548525,0.067291,false,false,3,0.1579,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A20","CD013232","CD014965","significance",0.707465,0.31261,2e-06,0.70251,true,false,3,0.1154,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A27","CD013232","CD014965","significance",0.707465,-0.057964,2e-06,0.957947,true,false,3,0.1154,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A9","CD013232","CD014965","significance",0.707465,0.591308,2e-06,0.455908,true,false,3,0.1154,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A18","CD013232","CD014965","none",0.707465,1.405417,2e-06,0.032173,true,true,3,0.1111,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A19","CD013232","CD014965","magnitude",0.707465,1.760203,2e-06,0.048918,true,true,3,0.1111,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A15","CD013232","CD014965","significance",0.707465,-0.218985,2e-06,0.548795,true,false,3,0.1071,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A4","CD013232","CD014965","significance",0.359871,-0.173071,0.001476,0.772996,true,false,3,0.0968,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A3","CD013232","CD014965","none",0.164869,0.668097,0.220042,0.067291,false,false,3,0.0882,"","","","","logOR","logOR"],["CD013232__A13","CD014965__A1","CD013232","CD014965","none",0.026391,0.601531,0.835704,0.07231,false,false,3,0.0769,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A1","CD013232","CD014965","none",0.164869,0.601531,0.220042,0.07231,false,false,3,0.0769,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A5","CD013232","CD014965","significance",0.148873,0.951587,0.176081,0.009846,false,true,3,0.0714,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A7","CD013232","CD014965","none",0.148873,0.135131,0.176081,0.810103,false,false,3,0.0698,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A1","CD013232","CD014965","none",0.148873,0.601531,0.176081,0.07231,false,false,3,0.0625,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A11","CD013232","CD014965","significance",0.22549,0.606485,0.00607,0.413821,true,false,3,0.0577,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A20","CD013232","CD014965","significance",0.22549,0.31261,0.00607,0.70251,true,false,3,0.0566,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A27","CD013232","CD014965","significance",0.22549,-0.057964,0.00607,0.957947,true,false,3,0.0566,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A9","CD013232","CD014965","significance",0.22549,0.591308,0.00607,0.455908,true,false,3,0.0566,"","","","","logOR","logOR"],["CD011841__A2","CD013763__A11","CD011841","CD013763","none",0.038776,0.140038,0.87797,0.474605,false,false,3,0.0556,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A11","CD013232","CD014965","significance",0.515932,0.606485,0.0,0.413821,true,false,3,0.0556,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A18","CD013232","CD014965","magnitude",0.22549,1.405417,0.00607,0.032173,true,true,3,0.0556,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A19","CD013232","CD014965","magnitude",0.22549,1.760203,0.00607,0.048918,true,true,3,0.0556,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A20","CD013232","CD014965","significance",0.515932,0.31261,0.0,0.70251,true,false,3,0.0545,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A27","CD013232","CD014965","significance",0.515932,-0.057964,0.0,0.957947,true,false,3,0.0545,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A15","CD013232","CD014965","significance",0.22549,-0.218985,0.00607,0.548795,true,false,3,0.0545,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A18","CD013232","CD014965","magnitude",0.515932,1.405417,0.0,0.032173,true,true,3,0.0536,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A19","CD013232","CD014965","magnitude",0.515932,1.760203,0.0,0.048918,true,true,3,0.0536,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A20","CD013232","CD014965","none",0.05166,0.31261,0.469888,0.70251,false,false,3,0.0536,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A20","CD013232","CD014965","none",0.195297,0.31261,0.056101,0.70251,false,false,3,0.0526,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A27","CD013232","CD014965","none",0.195297,-0.057964,0.056101,0.957947,false,false,3,0.0526,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A15","CD013232","CD014965","significance",0.515932,-0.218985,0.0,0.548795,true,false,3,0.0526,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A18","CD013232","CD014965","significance",0.05166,1.405417,0.469888,0.032173,false,true,3,0.0526,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A19","CD013232","CD014965","significance",0.05166,1.760203,0.469888,0.048918,false,true,3,0.0526,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A18","CD013232","CD014965","significance",0.195297,1.405417,0.056101,0.032173,false,true,3,0.0517,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A19","CD013232","CD014965","significance",0.195297,1.760203,0.056101,0.048918,false,true,3,0.0517,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A13","CD013232","CD014965","significance",0.05166,1.876395,0.469888,0.002282,false,true,3,0.0517,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A15","CD013232","CD014965","none",0.05166,-0.218985,0.469888,0.548795,false,false,3,0.0517,"","","","","logOR","logOR"],["CD013614__A17","CD014741__A4","CD013614","CD014741","significance",1.627347,-0.138152,0.0,0.328936,true,false,3,0.0508,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A15","CD013232","CD014965","none",0.195297,-0.218985,0.056101,0.548795,false,false,3,0.0508,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A18","CD013232","CD014965","significance",0.125876,1.405417,0.361807,0.032173,false,true,3,0.0508,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A19","CD013232","CD014965","significance",0.125876,1.760203,0.361807,0.048918,false,true,3,0.0508,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A4","CD013232","CD014965","none",0.05166,-0.173071,0.469888,0.772996,false,false,3,0.0508,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A4","CD013232","CD014965","none",0.195297,-0.173071,0.056101,0.772996,false,false,3,0.05,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A15","CD013232","CD014965","none",0.125876,-0.218985,0.361807,0.548795,false,false,3,0.05,"","","","","logOR","logOR"],["CD011841__A1","CD013763__A11","CD011841","CD013763","none",-0.50004,0.140038,0.081988,0.474605,false,false,3,0.0492,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A4","CD013232","CD014965","none",0.125876,-0.173071,0.361807,0.772996,false,false,3,0.0492,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A14","CD013232","CD014965","significance",0.125876,1.530006,0.361807,0.001691,false,true,3,0.0484,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A24","CD013232","CD014965","none",0.125876,-0.016582,0.361807,0.982063,false,false,3,0.0484,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A25","CD013232","CD014965","none",0.125876,-0.007999,0.361807,0.991347,false,false,3,0.0484,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A26","CD013232","CD014965","none",0.125876,-0.011412,0.361807,0.987655,false,false,3,0.0484,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A6","CD013232","CD014965","none",0.125876,0.222912,0.361807,0.672617,false,false,3,0.0484,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A2","CD013232","CD014965","significance",0.05166,0.871271,0.469888,0.014083,false,true,3,0.0476,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A3","CD013232","CD014965","none",0.05166,0.668097,0.469888,0.067291,false,false,3,0.0476,"","","","","logOR","logOR"],["CD013614__A17","CD014741__A5","CD013614","CD014741","significance",1.627347,-0.281322,0.0,0.344391,true,false,3,0.0469,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A18","CD013232","CD014965","magnitude",0.342491,1.405417,2e-06,0.032173,true,true,3,0.0469,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A19","CD013232","CD014965","magnitude",0.342491,1.760203,2e-06,0.048918,true,true,3,0.0469,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A15","CD013232","CD014965","significance",0.342491,-0.218985,2e-06,0.548795,true,false,3,0.0462,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A14","CD013232","CD014965","magnitude",0.342491,1.530006,2e-06,0.001691,true,true,3,0.0448,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A24","CD013232","CD014965","significance",0.342491,-0.016582,2e-06,0.982063,true,false,3,0.0448,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A25","CD013232","CD014965","significance",0.342491,-0.007999,2e-06,0.991347,true,false,3,0.0448,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A26","CD013232","CD014965","significance",0.342491,-0.011412,2e-06,0.987655,true,false,3,0.0448,"","","","","logOR","logOR"],["CD015014__A18","CD016064__A1","CD015014","CD016064","none",-0.089143,-0.066284,0.934763,0.645116,false,false,3,0.0435,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A2","CD013232","CD014965","magnitude",0.342491,0.871271,2e-06,0.014083,true,true,3,0.0429,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A3","CD013232","CD014965","significance",0.342491,0.668097,2e-06,0.067291,true,false,3,0.0429,"","","","","logOR","logOR"],["CD010216__A1","CD015120__A1","CD010216","CD015120","significance",0.451689,0.402235,3e-06,0.117576,true,false,3,0.0405,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A11","CD013232","CD014965","none",-0.014119,0.606485,0.948799,0.413821,false,false,3,0.0395,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A22","CD013232","CD014965","none",-0.014119,1.685352,0.948799,0.166542,false,false,3,0.0395,"","","","","logOR","logOR"],["CD002290__A1","CD003594__A1","CD002290","CD003594","direct",-0.991873,0.645971,0.0,1.1e-05,true,true,3,0.039,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A20","CD013232","CD014965","none",-0.014119,0.31261,0.948799,0.70251,false,false,3,0.039,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A8","CD013232","CD014965","none",-0.014119,-0.967367,0.948799,0.353872,false,false,3,0.039,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A5","CD012186","CD015443","significance",0.009306,-0.364946,0.769412,0.044321,false,true,3,0.0337,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A15","CD001920","CD016002","significance",-0.218259,29.234099,0.093125,0.00071,false,true,3,0.0283,"","","","","logOR","MD"],["CD001431__A4","CD013822__A4","CD001431","CD013822","significance",0.311176,0.071686,7.5e-05,0.927646,true,false,3,0.028,"","","","","logOR","logOR"],["CD001431__A4","CD013822__A5","CD001431","CD013822","significance",0.311176,0.514786,7.5e-05,0.070581,true,false,3,0.0278,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A15","CD001920","CD016002","significance",0.144147,29.234099,0.307436,0.00071,false,true,3,0.024,"","","","","logOR","MD"],["CD001920__A1","CD016002__A15","CD001920","CD016002","significance",-0.042121,29.234099,0.757753,0.00071,false,true,3,0.0231,"","","","","logOR","MD"],["CD001920__A1","CD016002__A16","CD001920","CD016002","significance",-0.042121,1.048288,0.757753,0.024124,false,true,3,0.0229,"","","","","logOR","MD"],["CD001920__A2","CD016002__A15","CD001920","CD016002","significance",-0.05989,29.234099,0.620428,0.00071,false,true,3,0.0221,"","","","","logOR","MD"],["CD001920__A2","CD016002__A16","CD001920","CD016002","significance",-0.05989,1.048288,0.620428,0.024124,false,true,3,0.0219,"","","","","logOR","MD"],["CD012586__A1","CD013827__A12","CD012586","CD013827","none",-0.025822,-0.002509,0.31709,0.996927,false,false,3,0.0216,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A13","CD001920","CD016002","significance",-0.04745,0.076513,0.73578,0.006883,false,true,3,0.0214,"","","","","logOR","MD"],["CD012586__A1","CD013827__A11","CD012586","CD013827","none",-0.025822,-0.271641,0.31709,0.637958,false,false,3,0.0213,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A2","CD012586","CD013827","none",-0.025822,-0.024619,0.31709,0.852285,false,false,3,0.0213,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A9","CD012586","CD013827","none",-0.025822,0.007551,0.31709,0.989393,false,false,3,0.0211,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A10","CD012586","CD013827","none",-0.025822,0.007832,0.31709,0.988565,false,false,3,0.021,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A8","CD012586","CD013827","none",-0.025822,0.007011,0.31709,0.989763,false,false,3,0.021,"","","","","logOR","logOR"],["CD006919__A1","CD012586__A1","CD006919","CD012586","none",0.050334,-0.025822,0.739829,0.31709,false,false,3,0.0207,"","","","","logOR","logOR"],["CD006919__A6","CD012586__A1","CD006919","CD012586","none",0.011668,-0.025822,0.977118,0.31709,false,false,3,0.0207,"","","","","logOR","logOR"],["CD001920__A4","CD016001__A14","CD001920","CD016001","none",-0.04649,0.018162,0.719873,0.486486,false,false,3,0.0196,"","","","","logOR","MD"],["CD006919__A3","CD012586__A1","CD006919","CD012586","none",0.086924,-0.025822,0.513344,0.31709,false,false,3,0.0191,"","","","","logOR","logOR"],["CD001431__A2","CD013822__A4","CD001431","CD013822","significance",0.219602,0.071686,3e-06,0.927646,true,false,3,0.0183,"","","","","logOR","logOR"],["CD001431__A2","CD013822__A5","CD001431","CD013822","significance",0.219602,0.514786,3e-06,0.070581,true,false,3,0.0182,"","","","","logOR","logOR"],["CD001920__A4","CD016001__A1","CD001920","CD016001","none",-0.04649,-0.059172,0.719873,0.868594,false,false,3,0.0179,"","","","","logOR","logOR"],["CD001920__A4","CD008349__A10","CD001920","CD008349","none",-0.04649,-0.002559,0.719873,0.99504,false,false,3,0.0178,"","","","","logOR","logOR"],["CD001431__A3","CD013822__A4","CD001431","CD013822","significance",0.257195,0.071686,6e-06,0.927646,true,false,3,0.0176,"","","","","logOR","logOR"],["CD001431__A3","CD013822__A5","CD001431","CD013822","significance",0.257195,0.514786,6e-06,0.070581,true,false,3,0.0175,"","","","","logOR","logOR"],["CD001431__A1","CD013822__A4","CD001431","CD013822","significance",0.10637,0.071686,0.015625,0.927646,true,false,3,0.0173,"","","","","logOR","logOR"],["CD001431__A1","CD013822__A5","CD001431","CD013822","significance",0.10637,0.514786,0.015625,0.070581,true,false,3,0.0172,"","","","","logOR","logOR"],["CD004376__A4","CD006185__A7","CD004376","CD006185","significance",0.797151,-0.104059,0.005261,0.349626,true,false,3,0.0163,"","","","","logOR","logOR"],["CD004376__A4","CD006185__A8","CD004376","CD006185","significance",0.797151,-0.059429,0.005261,0.76575,true,false,3,0.0163,"","","","","logOR","logOR"],["CD004376__A1","CD006185__A7","CD004376","CD006185","significance",-1.844701,-0.104059,0.0,0.349626,true,false,3,0.013,"","","","","MD","logOR"],["CD004376__A1","CD006185__A8","CD004376","CD006185","significance",-1.844701,-0.059429,0.0,0.76575,true,false,3,0.013,"","","","","MD","logOR"],["CD015530__A2","CD015551__A4","CD015530","CD015551","none",0.504067,0.115131,0.460774,0.276916,false,false,2,0.5,"","","","","logOR","logOR"],["CD015530__A2","CD015551__A1","CD015530","CD015551","none",0.504067,-0.95581,0.460774,0.115062,false,false,2,0.4,"","","","","logOR","logOR"],["CD015530__A3","CD015551__A4","CD015530","CD015551","none",0.337608,0.115131,0.146978,0.276916,false,false,2,0.4,"","","","","logOR","logOR"],["CD015215__A13","CD015252__A5","CD015215","CD015252","significance",0.33799,-0.531706,0.302249,0.013531,false,true,2,0.3333,"","","","","logOR","logOR"],["CD015530__A2","CD015551__A2","CD015530","CD015551","none",0.504067,-0.394122,0.460774,0.472718,false,false,2,0.3333,"","","","","logOR","logOR"],["CD015530__A2","CD015551__A3","CD015530","CD015551","none",0.504067,0.297786,0.460774,0.194839,false,false,2,0.3333,"","","","","logOR","logOR"],["CD015530__A3","CD015551__A1","CD015530","CD015551","none",0.337608,-0.95581,0.146978,0.115062,false,false,2,0.3333,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A13","CD012712","CD013827","none",-0.177394,0.360107,0.682889,0.349767,false,false,2,0.2857,"","","","","logOR","logOR"],["CD012067__A12","CD013414__A6","CD012067","CD013414","significance",-0.191679,0.815236,0.732213,0.000493,false,true,2,0.2857,"","","","","logOR","logOR"],["CD012067__A13","CD013414__A6","CD012067","CD013414","none",0.563911,0.815236,0.008619,0.000493,true,true,2,0.2857,"","","","","logOR","logOR"],["CD015134__A4","CD016131__A6","CD015134","CD016131","significance",-0.147257,0.094095,0.903188,0.012777,false,true,2,0.2857,"","","","","logOR","logOR"],["CD015215__A12","CD015252__A5","CD015215","CD015252","magnitude",-1.321288,-0.531706,0.00163,0.013531,true,true,2,0.2857,"","","","","logOR","logOR"],["CD015215__A13","CD015252__A2","CD015215","CD015252","none",0.33799,-0.469367,0.302249,0.206467,false,false,2,0.2857,"","","","","logOR","logOR"],["CD015530__A1","CD015551__A4","CD015530","CD015551","none",-0.550224,0.115131,0.129047,0.276916,false,false,2,0.2857,"","","","","logOR","logOR"],["CD015530__A3","CD015551__A2","CD015530","CD015551","none",0.337608,-0.394122,0.146978,0.472718,false,false,2,0.2857,"","","","","logOR","logOR"],["CD015530__A3","CD015551__A3","CD015530","CD015551","none",0.337608,0.297786,0.146978,0.194839,false,false,2,0.2857,"","","","","logOR","logOR"],["CD012214__A1","CD013111__A1","CD012214","CD013111","significance",1.254104,0.794108,0.005939,0.122024,true,false,2,0.25,"","","","","logOR","logOR"],["CD012214__A1","CD013111__A2","CD012214","CD013111","significance",1.254104,0.7829,0.005939,0.052534,true,false,2,0.25,"","","","","logOR","logOR"],["CD012214__A1","CD013111__A3","CD012214","CD013111","significance",1.254104,-0.372529,0.005939,0.451213,true,false,2,0.25,"","","","","logOR","logOR"],["CD012067__A14","CD013414__A6","CD012067","CD013414","significance",-0.515191,0.815236,0.409184,0.000493,false,true,2,0.25,"","","","","logOR","logOR"],["CD013053__A2","CD013054__A3","CD013053","CD013054","significance",1.656861,0.19031,0.002689,0.835757,true,false,2,0.25,"","","","","logOR","logOR"],["CD015215__A12","CD015252__A2","CD015215","CD015252","significance",-1.321288,-0.469367,0.00163,0.206467,true,false,2,0.25,"","","","","logOR","logOR"],["CD015215__A13","CD015252__A3","CD015215","CD015252","significance",0.33799,-0.914641,0.302249,2.6e-05,false,true,2,0.25,"","","","","logOR","logOR"],["CD015530__A1","CD015551__A1","CD015530","CD015551","none",-0.550224,-0.95581,0.129047,0.115062,false,false,2,0.25,"","","","","logOR","logOR"],["CD001552__A4","CD015101__A2","CD001552","CD015101","none",0.186983,-0.217278,0.800661,0.769814,false,false,2,0.2222,"","","","","logOR","logOR"],["CD012214__A1","CD013111__A4","CD012214","CD013111","significance",1.254104,0.217625,0.005939,0.748987,true,false,2,0.2222,"","","","","logOR","logOR"],["CD012067__A12","CD013414__A2","CD012067","CD013414","none",-0.191679,0.186553,0.732213,0.80034,false,false,2,0.2222,"","","","","logOR","logOR"],["CD012067__A12","CD013414__A8","CD012067","CD013414","none",-0.191679,0.483725,0.732213,0.052018,false,false,2,0.2222,"","","","","logOR","logOR"],["CD012067__A13","CD013414__A2","CD012067","CD013414","significance",0.563911,0.186553,0.008619,0.80034,true,false,2,0.2222,"","","","","logOR","logOR"],["CD012067__A13","CD013414__A8","CD012067","CD013414","significance",0.563911,0.483725,0.008619,0.052018,true,false,2,0.2222,"","","","","logOR","logOR"],["CD013051__A2","CD013053__A2","CD013051","CD013053","none",1.488281,1.656861,0.003929,0.002689,true,true,2,0.2222,"","","","","logOR","logOR"],["CD013051__A2","CD013054__A3","CD013051","CD013054","significance",1.488281,0.19031,0.003929,0.835757,true,false,2,0.2222,"","","","","logOR","logOR"],["CD013053__A1","CD013054__A3","CD013053","CD013054","significance",1.681001,0.19031,0.000776,0.835757,true,false,2,0.2222,"","","","","logOR","logOR"],["CD015215__A12","CD015252__A3","CD015215","CD015252","none",-1.321288,-0.914641,0.00163,2.6e-05,true,true,2,0.2222,"","","","","logOR","logOR"],["CD015215__A13","CD015252__A4","CD015215","CD015252","significance",0.33799,-0.586809,0.302249,0.027816,false,true,2,0.2222,"","","","","logOR","logOR"],["CD015530__A1","CD015551__A2","CD015530","CD015551","none",-0.550224,-0.394122,0.129047,0.472718,false,false,2,0.2222,"","","","","logOR","logOR"],["CD015530__A1","CD015551__A3","CD015530","CD015551","none",-0.550224,0.297786,0.129047,0.194839,false,false,2,0.2222,"","","","","logOR","logOR"],["CD001552__A4","CD015101__A1","CD001552","CD015101","none",0.186983,-0.342332,0.800661,0.410915,false,false,2,0.2,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A13","CD012712","CD013827","none",-0.041754,0.360107,0.863247,0.349767,false,false,2,0.2,"","","","","logOR","logOR"],["CD012067__A12","CD013414__A4","CD012067","CD013414","none",-0.191679,0.378459,0.732213,0.069711,false,false,2,0.2,"","","","","logOR","logOR"],["CD012067__A13","CD013414__A4","CD012067","CD013414","significance",0.563911,0.378459,0.008619,0.069711,true,false,2,0.2,"","","","","logOR","logOR"],["CD012067__A14","CD013414__A2","CD012067","CD013414","none",-0.515191,0.186553,0.409184,0.80034,false,false,2,0.2,"","","","","logOR","logOR"],["CD012067__A14","CD013414__A8","CD012067","CD013414","none",-0.515191,0.483725,0.409184,0.052018,false,false,2,0.2,"","","","","logOR","logOR"],["CD013051__A2","CD013053__A1","CD013051","CD013053","none",1.488281,1.681001,0.003929,0.000776,true,true,2,0.2,"","","","","logOR","logOR"],["CD013052__A2","CD013053__A2","CD013052","CD013053","significance",-0.00219,1.656861,0.993746,0.002689,false,true,2,0.2,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A12","CD013232","CD014965","none",-0.346641,1.00038,0.547215,0.215714,false,false,2,0.2,"","","","","logOR","logOR"],["CD015215__A12","CD015252__A4","CD015215","CD015252","magnitude",-1.321288,-0.586809,0.00163,0.027816,true,true,2,0.2,"","","","","logOR","logOR"],["CD001552__A3","CD015101__A2","CD001552","CD015101","none",-0.010621,-0.217278,0.98612,0.769814,false,false,2,0.1818,"","","","","logOR","logOR"],["CD012067__A12","CD013414__A1","CD012067","CD013414","none",-0.191679,-0.008616,0.732213,0.954706,false,false,2,0.1818,"","","","","logOR","logOR"],["CD012067__A13","CD013414__A1","CD012067","CD013414","significance",0.563911,-0.008616,0.008619,0.954706,true,false,2,0.1818,"","","","","logOR","logOR"],["CD012067__A14","CD013414__A4","CD012067","CD013414","none",-0.515191,0.378459,0.409184,0.069711,false,false,2,0.1818,"","","","","logOR","logOR"],["CD013052__A2","CD013053__A1","CD013052","CD013053","significance",-0.00219,1.681001,0.993746,0.000776,false,true,2,0.1818,"","","","","logOR","logOR"],["CD013053__A2","CD013054__A7","CD013053","CD013054","direct",1.656861,-1.093689,0.002689,0.000323,true,true,2,0.1818,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A11","CD013232","CD014965","none",-0.346641,0.606485,0.547215,0.413821,false,false,2,0.1818,"","","","","logOR","logOR"],["CD013232__A21","CD014965__A22","CD013232","CD014965","none",-0.346641,1.685352,0.547215,0.166542,false,false,2,0.1818,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A12","CD013232","CD014965","none",-0.332785,1.00038,0.548525,0.215714,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015215__A2","CD015252__A2","CD015215","CD015252","significance",0.977352,-0.469367,0.016911,0.206467,true,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A7","CD015255__A14","CD015254","CD015255","none",-0.67269,-0.509934,0.084261,0.339866,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A7","CD015255__A15","CD015254","CD015255","none",-0.67269,-0.650823,0.084261,0.217582,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A8","CD015255__A14","CD015254","CD015255","none",-0.606938,-0.509934,0.11461,0.339866,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A8","CD015255__A15","CD015254","CD015255","none",-0.606938,-0.650823,0.11461,0.217582,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A9","CD015255__A14","CD015254","CD015255","none",-0.59753,-0.509934,0.117841,0.339866,false,false,2,0.1818,"","","","","logOR","logOR"],["CD015254__A9","CD015255__A15","CD015254","CD015255","none",-0.59753,-0.650823,0.117841,0.217582,false,false,2,0.1818,"","","","","logOR","logOR"],["CD001552__A3","CD015101__A1","CD001552","CD015101","none",-0.010621,-0.342332,0.98612,0.410915,false,false,2,0.1667,"","","","","logOR","logOR"],["CD007110__A3","CD010533__A4","CD007110","CD010533","none",0.082265,-0.202354,0.852744,0.213033,false,false,2,0.1667,"","","","","logOR","logOR"],["CD012067__A14","CD013414__A1","CD012067","CD013414","none",-0.515191,-0.008616,0.409184,0.954706,false,false,2,0.1667,"","","","","logOR","logOR"],["CD013052__A3","CD013054__A3","CD013052","CD013054","none",-0.036515,0.19031,0.815243,0.835757,false,false,2,0.1667,"","","","","logOR","logOR"],["CD013053__A1","CD013054__A7","CD013053","CD013054","direct",1.681001,-1.093689,0.000776,0.000323,true,true,2,0.1667,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A11","CD013232","CD014965","none",-0.332785,0.606485,0.548525,0.413821,false,false,2,0.1667,"","","","","logOR","logOR"],["CD013232__A19","CD014965__A22","CD013232","CD014965","none",-0.332785,1.685352,0.548525,0.166542,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015215__A2","CD015252__A3","CD015215","CD015252","direct",0.977352,-0.914641,0.016911,2.6e-05,true,true,2,0.1667,"","","","","logOR","logOR"],["CD015215__A4","CD015252__A2","CD015215","CD015252","none",0.00522,-0.469367,0.993413,0.206467,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015215__A5","CD015252__A2","CD015215","CD015252","none",-0.250125,-0.469367,0.623166,0.206467,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015254__A6","CD015255__A14","CD015254","CD015255","none",-0.558013,-0.509934,0.13504,0.339866,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015254__A6","CD015255__A15","CD015254","CD015255","none",-0.558013,-0.650823,0.13504,0.217582,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015254__A7","CD015255__A13","CD015254","CD015255","none",-0.67269,-0.621326,0.084261,0.360426,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015254__A8","CD015255__A13","CD015254","CD015255","none",-0.606938,-0.621326,0.11461,0.360426,false,false,2,0.1667,"","","","","logOR","logOR"],["CD015254__A9","CD015255__A13","CD015254","CD015255","none",-0.59753,-0.621326,0.117841,0.360426,false,false,2,0.1667,"","","","","logOR","logOR"],["CD001552__A2","CD015101__A2","CD001552","CD015101","significance",1.019016,-0.217278,0.038397,0.769814,true,false,2,0.1538,"","","","","logOR","logOR"],["CD007110__A1","CD010533__A4","CD007110","CD010533","none",0.062176,-0.202354,0.867339,0.213033,false,false,2,0.1538,"","","","","logOR","logOR"],["CD007110__A2","CD010533__A4","CD007110","CD010533","none",0.134358,-0.202354,0.694805,0.213033,false,false,2,0.1538,"","","","","logOR","logOR"],["CD013051__A2","CD013052__A3","CD013051","CD013052","significance",1.488281,-0.036515,0.003929,0.815243,true,false,2,0.1538,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A3","CD015134","CD016131","none",-0.662522,-0.69036,0.040579,0.001214,true,true,2,0.1538,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A4","CD015134","CD016131","significance",-0.662522,-0.105325,0.040579,0.461736,true,false,2,0.1538,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A3","CD015134","CD016131","significance",0.244002,-0.69036,0.460379,0.001214,false,true,2,0.1538,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A4","CD015134","CD016131","none",0.244002,-0.105325,0.460379,0.461736,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A3","CD015134","CD016131","significance",-0.049953,-0.69036,0.421464,0.001214,false,true,2,0.1538,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A4","CD015134","CD016131","none",-0.049953,-0.105325,0.421464,0.461736,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015215__A4","CD015252__A3","CD015215","CD015252","significance",0.00522,-0.914641,0.993413,2.6e-05,false,true,2,0.1538,"","","","","logOR","logOR"],["CD015215__A5","CD015252__A3","CD015215","CD015252","significance",-0.250125,-0.914641,0.623166,2.6e-05,false,true,2,0.1538,"","","","","logOR","logOR"],["CD015254__A6","CD015255__A13","CD015254","CD015255","none",-0.558013,-0.621326,0.13504,0.360426,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015254__A7","CD015255__A12","CD015254","CD015255","none",-0.67269,-0.509358,0.084261,0.329938,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015254__A8","CD015255__A12","CD015254","CD015255","none",-0.606938,-0.509358,0.11461,0.329938,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015254__A9","CD015255__A12","CD015254","CD015255","none",-0.59753,-0.509358,0.117841,0.329938,false,false,2,0.1538,"","","","","logOR","logOR"],["CD015518__A4","CD015519__A9","CD015518","CD015519","none",-0.063642,0.521017,0.911193,0.709255,false,false,2,0.1538,"","","","","logOR","logOR"],["CD001552__A2","CD015101__A1","CD001552","CD015101","significance",1.019016,-0.342332,0.038397,0.410915,true,false,2,0.1429,"","","","","logOR","logOR"],["CD007110__A3","CD010533__A3","CD007110","CD010533","none",0.082265,-0.361377,0.852744,0.1376,false,false,2,0.1429,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A13","CD012712","CD013827","none",0.159945,0.360107,0.151238,0.349767,false,false,2,0.1429,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A13","CD012712","CD013827","significance",-0.245619,0.360107,0.041032,0.349767,true,false,2,0.1429,"","","","","logOR","logOR"],["CD012067__A8","CD013414__A6","CD012067","CD013414","significance",-0.212873,0.815236,0.101864,0.000493,false,true,2,0.1429,"","","","","logOR","logOR"],["CD013051__A2","CD013054__A2","CD013051","CD013054","direct",1.488281,-0.774706,0.003929,0.004772,true,true,2,0.1429,"","","","","logOR","logOR"],["CD015134__A1","CD016131__A5","CD015134","CD016131","significance",-0.662522,-0.118413,0.040579,0.612583,true,false,2,0.1429,"","","","","logOR","logOR"],["CD015134__A2","CD016131__A5","CD015134","CD016131","none",0.244002,-0.118413,0.460379,0.612583,false,false,2,0.1429,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A3","CD015134","CD016131","significance",-0.127837,-0.69036,0.693148,0.001214,false,true,2,0.1429,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A4","CD015134","CD016131","none",-0.127837,-0.105325,0.693148,0.461736,false,false,2,0.1429,"","","","","logOR","logOR"],["CD015134__A6","CD016131__A5","CD015134","CD016131","none",-0.049953,-0.118413,0.421464,0.612583,false,false,2,0.1429,"","","","","logOR","logOR"],["CD015134__A4","CD016131__A2","CD015134","CD016131","significance",-0.147257,-0.98943,0.903188,1e-05,false,true,2,0.1429,"","","","","logOR","logOR"],["CD015254__A6","CD015255__A12","CD015254","CD015255","none",-0.558013,-0.509358,0.13504,0.329938,false,false,2,0.1429,"","","","","logOR","logOR"],["CD000219__A2","CD004417__A3","CD000219","CD004417","direct",0.602688,-0.48401,0.000502,0.003735,true,true,2,0.1333,"","","","","logOR","logOR"],["CD007110__A1","CD010533__A3","CD007110","CD010533","none",0.062176,-0.361377,0.867339,0.1376,false,false,2,0.1333,"","","","","logOR","logOR"],["CD007110__A2","CD010533__A3","CD007110","CD010533","none",0.134358,-0.361377,0.694805,0.1376,false,false,2,0.1333,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A11","CD012712","CD013827","none",-0.177394,-0.271641,0.682889,0.637958,false,false,2,0.1333,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A7","CD012712","CD013827","none",-0.177394,-0.458748,0.682889,0.428455,false,false,2,0.1333,"","","","","logOR","logOR"],["CD013051__A1","CD013053__A2","CD013051","CD013053","none",1.716356,1.656861,1.6e-05,0.002689,true,true,2,0.1333,"","","","","logOR","logOR"],["CD013051__A1","CD013054__A3","CD013051","CD013054","significance",1.716356,0.19031,1.6e-05,0.835757,true,false,2,0.1333,"","","","","logOR","logOR"],["CD013052__A3","CD013054__A7","CD013052","CD013054","significance",-0.036515,-1.093689,0.815243,0.000323,false,true,2,0.1333,"","","","","logOR","logOR"],["CD015134__A3","CD016131__A5","CD015134","CD016131","none",-0.127837,-0.118413,0.693148,0.612583,false,false,2,0.1333,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A3","CD015134","CD016131","significance",0.159973,-0.69036,0.120461,0.001214,false,true,2,0.1333,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A4","CD015134","CD016131","none",0.159973,-0.105325,0.120461,0.461736,false,false,2,0.1333,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A3","CD015134","CD016131","significance",-0.283064,-0.69036,0.343008,0.001214,false,true,2,0.1333,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A4","CD015134","CD016131","none",-0.283064,-0.105325,0.343008,0.461736,false,false,2,0.1333,"","","","","logOR","logOR"],["CD015134__A4","CD016131__A1","CD015134","CD016131","significance",-0.147257,-0.948512,0.903188,9.5e-05,false,true,2,0.1333,"","","","","logOR","logOR"],["CD015518__A1","CD015519__A9","CD015518","CD015519","none",-0.057668,0.521017,0.788945,0.709255,false,false,2,0.1333,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A9","CD012712","CD013827","none",-0.177394,0.007551,0.682889,0.989393,false,false,2,0.125,"","","","","logOR","logOR"],["CD012067__A8","CD013414__A2","CD012067","CD013414","none",-0.212873,0.186553,0.101864,0.80034,false,false,2,0.125,"","","","","logOR","logOR"],["CD012067__A8","CD013414__A8","CD012067","CD013414","none",-0.212873,0.483725,0.101864,0.052018,false,false,2,0.125,"","","","","logOR","logOR"],["CD013051__A1","CD013053__A1","CD013051","CD013053","none",1.716356,1.681001,1.6e-05,0.000776,true,true,2,0.125,"","","","","logOR","logOR"],["CD015134__A5","CD016131__A5","CD015134","CD016131","none",0.159973,-0.118413,0.120461,0.612583,false,false,2,0.125,"","","","","logOR","logOR"],["CD015134__A7","CD016131__A5","CD015134","CD016131","none",-0.283064,-0.118413,0.343008,0.612583,false,false,2,0.125,"","","","","logOR","logOR"],["CD015518__A2","CD015519__A9","CD015518","CD015519","none",-0.03416,0.521017,0.879849,0.709255,false,false,2,0.125,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A10","CD012712","CD013827","none",-0.177394,0.007832,0.682889,0.988565,false,false,2,0.1176,"","","","","logOR","logOR"],["CD012712__A19","CD013827__A8","CD012712","CD013827","none",-0.177394,0.007011,0.682889,0.989763,false,false,2,0.1176,"","","","","logOR","logOR"],["CD012067__A8","CD013414__A4","CD012067","CD013414","none",-0.212873,0.378459,0.101864,0.069711,false,false,2,0.1176,"","","","","logOR","logOR"],["CD013051__A2","CD013054__A1","CD013051","CD013054","significance",1.488281,0.063335,0.003929,0.827713,true,false,2,0.1176,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A20","CD013232","CD014965","none",-0.054595,0.31261,0.915803,0.70251,false,false,2,0.1176,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A11","CD012712","CD013827","none",-0.041754,-0.271641,0.863247,0.637958,false,false,2,0.1111,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A7","CD012712","CD013827","none",-0.041754,-0.458748,0.863247,0.428455,false,false,2,0.1111,"","","","","logOR","logOR"],["CD012067__A8","CD013414__A1","CD012067","CD013414","none",-0.212873,-0.008616,0.101864,0.954706,false,false,2,0.1111,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A18","CD013232","CD014965","significance",-0.054595,1.405417,0.915803,0.032173,false,true,2,0.1111,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A19","CD013232","CD014965","significance",-0.054595,1.760203,0.915803,0.048918,false,true,2,0.1111,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A12","CD013232","CD014965","significance",-0.857054,1.00038,0.000107,0.215714,true,false,2,0.1111,"","","","","logOR","logOR"],["CD000219__A2","CD004417__A1","CD000219","CD004417","direct",0.602688,-0.868444,0.000502,0.00573,true,true,2,0.1053,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A9","CD012712","CD013827","none",-0.041754,0.007551,0.863247,0.989393,false,false,2,0.1053,"","","","","logOR","logOR"],["CD013051__A1","CD013052__A3","CD013051","CD013052","significance",1.716356,-0.036515,1.6e-05,0.815243,true,false,2,0.1053,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A13","CD013232","CD014965","significance",-0.054595,1.876395,0.915803,0.002282,false,true,2,0.1053,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A15","CD013232","CD014965","none",-0.054595,-0.218985,0.915803,0.548795,false,false,2,0.1053,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A11","CD013232","CD014965","significance",-0.857054,0.606485,0.000107,0.413821,true,false,2,0.1053,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A23","CD013232","CD014965","significance",-0.857054,-0.169619,0.000107,0.691849,true,false,2,0.1053,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A10","CD012712","CD013827","none",-0.041754,0.007832,0.863247,0.988565,false,false,2,0.1,"","","","","logOR","logOR"],["CD012712__A12","CD013827__A8","CD012712","CD013827","none",-0.041754,0.007011,0.863247,0.989763,false,false,2,0.1,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A13","CD012712","CD013827","significance",-0.258475,0.360107,0.002533,0.349767,true,false,2,0.1,"","","","","logOR","logOR"],["CD013051__A1","CD013054__A2","CD013051","CD013054","direct",1.716356,-0.774706,1.6e-05,0.004772,true,true,2,0.1,"","","","","logOR","logOR"],["CD013232__A18","CD014965__A16","CD013232","CD014965","significance",-0.857054,0.895015,0.000107,0.17026,true,false,2,0.1,"","","","","logOR","logOR"],["CD013874__A8","CD015443__A1","CD013874","CD015443","none",0.904292,-0.110497,0.076775,0.425953,false,false,2,0.1,"","","","","logOR","logOR"],["CD014300__A13","CD014722__A10","CD014300","CD014722","none",-0.076719,-0.088603,0.783104,0.881517,false,false,2,0.1,"","","","","logOR","logOR"],["CD000219__A1","CD004417__A3","CD000219","CD004417","none",-0.390958,-0.48401,0.000115,0.003735,true,true,2,0.0952,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A13","CD012712","CD013827","none",-0.144587,0.360107,0.529016,0.349767,false,false,2,0.0952,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A14","CD013232","CD014965","significance",-0.054595,1.530006,0.915803,0.001691,false,true,2,0.0952,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A24","CD013232","CD014965","none",-0.054595,-0.016582,0.915803,0.982063,false,false,2,0.0952,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A25","CD013232","CD014965","none",-0.054595,-0.007999,0.915803,0.991347,false,false,2,0.0952,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A26","CD013232","CD014965","none",-0.054595,-0.011412,0.915803,0.987655,false,false,2,0.0952,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A6","CD013232","CD014965","none",-0.054595,0.222912,0.915803,0.672617,false,false,2,0.0952,"","","","","logOR","logOR"],["CD008552__A2","CD008709__A2","CD008552","CD008709","none",-0.137057,-0.355299,0.775734,0.209349,false,false,2,0.0909,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A11","CD012712","CD013827","none",0.159945,-0.271641,0.151238,0.637958,false,false,2,0.0909,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A7","CD012712","CD013827","none",0.159945,-0.458748,0.151238,0.428455,false,false,2,0.0909,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A11","CD012712","CD013827","significance",-0.245619,-0.271641,0.041032,0.637958,true,false,2,0.0909,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A7","CD012712","CD013827","significance",-0.245619,-0.458748,0.041032,0.428455,true,false,2,0.0909,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A9","CD012712","CD013827","none",0.159945,0.007551,0.151238,0.989393,false,false,2,0.087,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A9","CD012712","CD013827","significance",-0.245619,0.007551,0.041032,0.989393,true,false,2,0.087,"","","","","logOR","logOR"],["CD013051__A1","CD013054__A1","CD013051","CD013054","significance",1.716356,0.063335,1.6e-05,0.827713,true,false,2,0.087,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A5","CD013232","CD014965","significance",-0.054595,0.951587,0.915803,0.009846,false,true,2,0.087,"","","","","logOR","logOR"],["CD013874__A3","CD015443__A1","CD013874","CD015443","significance",-1.192128,-0.110497,0.007234,0.425953,true,false,2,0.087,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A10","CD012712","CD013827","none",0.159945,0.007832,0.151238,0.988565,false,false,2,0.0833,"","","","","logOR","logOR"],["CD012712__A1","CD013827__A8","CD012712","CD013827","none",0.159945,0.007011,0.151238,0.989763,false,false,2,0.0833,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A10","CD012712","CD013827","significance",-0.245619,0.007832,0.041032,0.988565,true,false,2,0.0833,"","","","","logOR","logOR"],["CD012712__A3","CD013827__A8","CD012712","CD013827","significance",-0.245619,0.007011,0.041032,0.989763,true,false,2,0.0833,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A13","CD012712","CD013827","significance",-0.252612,0.360107,0.000803,0.349767,true,false,2,0.0833,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A7","CD013232","CD014965","none",-0.054595,0.135131,0.915803,0.810103,false,false,2,0.0833,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A8","CD013232","CD014965","none",-0.150605,-0.967367,0.537662,0.353872,false,false,2,0.0833,"","","","","logOR","logOR"],["CD013874__A8","CD015443__A2","CD013874","CD015443","none",0.904292,0.313808,0.076775,0.086845,false,false,2,0.0833,"","","","","logOR","logOR"],["CD000219__A1","CD004417__A1","CD000219","CD004417","magnitude",-0.390958,-0.868444,0.000115,0.00573,true,true,2,0.08,"","","","","logOR","logOR"],["CD003962__A2","CD015060__A2","CD003962","CD015060","none",-0.087761,-0.119492,0.748938,0.783493,false,false,2,0.08,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A13","CD012712","CD013827","significance",-0.829392,0.360107,0.0,0.349767,true,false,2,0.08,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A12","CD013232","CD014965","significance",0.707465,1.00038,2e-06,0.215714,true,false,2,0.08,"","","","","logOR","logOR"],["CD008063__A3","CD015673__A5","CD008063","CD015673","none",-0.040963,-0.233985,0.930136,0.109861,false,false,2,0.0769,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A11","CD013232","CD014965","significance",0.707465,0.606485,2e-06,0.413821,true,false,2,0.0769,"","","","","logOR","logOR"],["CD013232__A12","CD014965__A22","CD013232","CD014965","significance",0.707465,1.685352,2e-06,0.166542,true,false,2,0.0769,"","","","","logOR","logOR"],["CD003962__A2","CD015060__A1","CD003962","CD015060","none",-0.087761,-0.238954,0.748938,0.532706,false,false,2,0.0741,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A4","CD013232","CD014965","none",-0.150605,-0.173071,0.537662,0.772996,false,false,2,0.0741,"","","","","logOR","logOR"],["CD013874__A3","CD015443__A2","CD013874","CD015443","significance",-1.192128,0.313808,0.007234,0.086845,true,false,2,0.0741,"","","","","logOR","logOR"],["CD014300__A13","CD014722__A4","CD014300","CD014722","none",-0.076719,-0.009604,0.783104,0.983662,false,false,2,0.0741,"","","","","logOR","logOR"],["CD008063__A3","CD015673__A3","CD008063","CD015673","none",-0.040963,-0.154424,0.930136,0.440851,false,false,2,0.0714,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A11","CD012712","CD013827","significance",-0.258475,-0.271641,0.002533,0.637958,true,false,2,0.0714,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A7","CD012712","CD013827","significance",-0.258475,-0.458748,0.002533,0.428455,true,false,2,0.0714,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A8","CD013232","CD014965","none",0.164869,-0.967367,0.220042,0.353872,false,false,2,0.0714,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A6","CD013232","CD014965","none",-0.150605,0.222912,0.537662,0.672617,false,false,2,0.0714,"","","","","logOR","logOR"],["CD013874__A1","CD015443__A1","CD013874","CD015443","significance",-0.628052,-0.110497,0.00788,0.425953,true,false,2,0.0714,"","","","","logOR","logOR"],["CD014300__A13","CD014722__A7","CD014300","CD014722","none",-0.076719,-0.025976,0.783104,0.954527,false,false,2,0.0714,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A11","CD012712","CD013827","none",-0.144587,-0.271641,0.529016,0.637958,false,false,2,0.069,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A7","CD012712","CD013827","none",-0.144587,-0.458748,0.529016,0.428455,false,false,2,0.069,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A9","CD012712","CD013827","significance",-0.258475,0.007551,0.002533,0.989393,true,false,2,0.069,"","","","","logOR","logOR"],["CD013232__A17","CD014965__A1","CD013232","CD014965","none",-0.054595,0.601531,0.915803,0.07231,false,false,2,0.069,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A8","CD013232","CD014965","significance",0.359871,-0.967367,0.001476,0.353872,true,false,2,0.069,"","","","","logOR","logOR"],["CD013874__A2","CD015443__A1","CD013874","CD015443","none",-0.278968,-0.110497,0.314638,0.425953,false,false,2,0.069,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A9","CD012712","CD013827","none",-0.144587,0.007551,0.529016,0.989393,false,false,2,0.0667,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A10","CD012712","CD013827","significance",-0.258475,0.007832,0.002533,0.988565,true,false,2,0.0667,"","","","","logOR","logOR"],["CD012712__A7","CD013827__A8","CD012712","CD013827","significance",-0.258475,0.007011,0.002533,0.989763,true,false,2,0.0667,"","","","","logOR","logOR"],["CD012067__A1","CD013414__A6","CD012067","CD013414","significance",-0.154213,0.815236,0.663789,0.000493,false,true,2,0.0667,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A5","CD013232","CD014965","significance",-0.150605,0.951587,0.537662,0.009846,false,true,2,0.0667,"","","","","logOR","logOR"],["CD002042__A5","CD009752__A9","CD002042","CD009752","none",0.182176,0.497168,0.509416,0.545239,false,false,2,0.0645,"","","","","logOR","logOR"],["CD003962__A4","CD015060__A2","CD003962","CD015060","none",0.198627,-0.119492,0.555894,0.783493,false,false,2,0.0645,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A10","CD012712","CD013827","none",-0.144587,0.007832,0.529016,0.988565,false,false,2,0.0645,"","","","","logOR","logOR"],["CD012712__A10","CD013827__A8","CD012712","CD013827","none",-0.144587,0.007011,0.529016,0.989763,false,false,2,0.0645,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A4","CD013232","CD014965","none",0.164869,-0.173071,0.220042,0.772996,false,false,2,0.0645,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A2","CD013232","CD014965","significance",-0.150605,0.871271,0.537662,0.014083,false,true,2,0.0645,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A3","CD013232","CD014965","none",-0.150605,0.668097,0.537662,0.067291,false,false,2,0.0645,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A7","CD013232","CD014965","none",-0.150605,0.135131,0.537662,0.810103,false,false,2,0.0645,"","","","","logOR","logOR"],["CD002042__A5","CD009752__A10","CD002042","CD009752","none",0.182176,-0.001022,0.509416,0.999057,false,false,2,0.0625,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A11","CD012712","CD013827","significance",-0.252612,-0.271641,0.000803,0.637958,true,false,2,0.0625,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A7","CD012712","CD013827","significance",-0.252612,-0.458748,0.000803,0.428455,true,false,2,0.0625,"","","","","logOR","logOR"],["CD012067__A1","CD013414__A2","CD012067","CD013414","none",-0.154213,0.186553,0.663789,0.80034,false,false,2,0.0625,"","","","","logOR","logOR"],["CD012067__A1","CD013414__A8","CD012067","CD013414","none",-0.154213,0.483725,0.663789,0.052018,false,false,2,0.0625,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A6","CD013232","CD014965","none",0.164869,0.222912,0.220042,0.672617,false,false,2,0.0625,"","","","","logOR","logOR"],["CD013874__A1","CD015443__A2","CD013874","CD015443","significance",-0.628052,0.313808,0.00788,0.086845,true,false,2,0.0625,"","","","","logOR","logOR"],["CD003962__A4","CD015060__A1","CD003962","CD015060","none",0.198627,-0.238954,0.555894,0.532706,false,false,2,0.0606,"","","","","logOR","logOR"],["CD009749__A2","CD010001__A1","CD009749","CD010001","none",0.809335,0.433468,0.002921,8e-06,true,true,2,0.0606,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A11","CD012712","CD013827","significance",-0.829392,-0.271641,0.0,0.637958,true,false,2,0.0606,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A7","CD012712","CD013827","significance",-0.829392,-0.458748,0.0,0.428455,true,false,2,0.0606,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A9","CD012712","CD013827","significance",-0.252612,0.007551,0.000803,0.989393,true,false,2,0.0606,"","","","","logOR","logOR"],["CD012067__A1","CD013414__A4","CD012067","CD013414","none",-0.154213,0.378459,0.663789,0.069711,false,false,2,0.0606,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A6","CD013232","CD014965","significance",0.359871,0.222912,0.001476,0.672617,true,false,2,0.0606,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A24","CD013232","CD014965","significance",0.359871,-0.016582,0.001476,0.982063,true,false,2,0.0606,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A25","CD013232","CD014965","significance",0.359871,-0.007999,0.001476,0.991347,true,false,2,0.0606,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A26","CD013232","CD014965","significance",0.359871,-0.011412,0.001476,0.987655,true,false,2,0.0606,"","","","","logOR","logOR"],["CD013874__A2","CD015443__A2","CD013874","CD015443","none",-0.278968,0.313808,0.314638,0.086845,false,false,2,0.0606,"","","","","logOR","logOR"],["CD008552__A4","CD008709__A2","CD008552","CD008709","none",-0.147132,-0.355299,0.691676,0.209349,false,false,2,0.0588,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A9","CD012712","CD013827","significance",-0.829392,0.007551,0.0,0.989393,true,false,2,0.0588,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A10","CD012712","CD013827","significance",-0.252612,0.007832,0.000803,0.988565,true,false,2,0.0588,"","","","","logOR","logOR"],["CD012712__A4","CD013827__A8","CD012712","CD013827","significance",-0.252612,0.007011,0.000803,0.989763,true,false,2,0.0588,"","","","","logOR","logOR"],["CD012067__A1","CD013414__A1","CD012067","CD013414","none",-0.154213,-0.008616,0.663789,0.954706,false,false,2,0.0588,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A5","CD013232","CD014965","significance",0.164869,0.951587,0.220042,0.009846,false,true,2,0.0588,"","","","","logOR","logOR"],["CD013232__A13","CD014965__A5","CD013232","CD014965","significance",0.026391,0.951587,0.835704,0.009846,false,true,2,0.0588,"","","","","logOR","logOR"],["CD008552__A3","CD008709__A2","CD008552","CD008709","none",-0.180153,-0.355299,0.616521,0.209349,false,false,2,0.0571,"","","","","logOR","logOR"],["CD011841__A2","CD013763__A9","CD011841","CD013763","significance",0.038776,-0.791754,0.87797,0.029745,false,true,2,0.0571,"","","","","logOR","logOR"],["CD009749__A7","CD010001__A1","CD009749","CD010001","significance",0.473066,0.433468,0.380171,8e-06,false,true,2,0.0571,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A10","CD012712","CD013827","significance",-0.829392,0.007832,0.0,0.988565,true,false,2,0.0571,"","","","","logOR","logOR"],["CD012712__A2","CD013827__A8","CD012712","CD013827","significance",-0.829392,0.007011,0.0,0.989763,true,false,2,0.0571,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A2","CD013232","CD014965","significance",0.164869,0.871271,0.220042,0.014083,false,true,2,0.0571,"","","","","logOR","logOR"],["CD013232__A10","CD014965__A7","CD013232","CD014965","none",0.164869,0.135131,0.220042,0.810103,false,false,2,0.0571,"","","","","logOR","logOR"],["CD002042__A5","CD009752__A1","CD002042","CD009752","none",0.182176,-0.269495,0.509416,0.512156,false,false,2,0.0556,"","","","","logOR","logOR"],["CD006536__A18","CD012712__A4","CD006536","CD012712","significance",-0.112701,-0.252612,0.755872,0.000803,false,true,2,0.0556,"","","","","logOR","logOR"],["CD013232__A2","CD014965__A1","CD013232","CD014965","none",-0.150605,0.601531,0.537662,0.07231,false,false,2,0.0556,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A2","CD013232","CD014965","magnitude",0.359871,0.871271,0.001476,0.014083,true,true,2,0.0556,"","","","","logOR","logOR"],["CD013232__A6","CD014965__A3","CD013232","CD014965","significance",0.359871,0.668097,0.001476,0.067291,true,false,2,0.0556,"","","","","logOR","logOR"],["CD009749__A2","CD010001__A3","CD009749","CD010001","none",0.809335,0.681833,0.002921,0.0,true,true,2,0.0541,"","","","","logOR","logOR"],["CD009749__A6","CD010001__A1","CD009749","CD010001","none",0.740918,0.433468,0.000943,8e-06,true,true,2,0.0541,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A8","CD013232","CD014965","none",0.148873,-0.967367,0.176081,0.353872,false,false,2,0.0541,"","","","","logOR","logOR"],["CD011841__A2","CD013763__A8","CD011841","CD013763","significance",0.038776,-0.98276,0.87797,0.000258,false,true,2,0.0513,"","","","","logOR","logOR"],["CD003331__A7","CD013508__A1","CD003331","CD013508","none",-0.000177,0.011953,0.999675,0.97858,false,false,2,0.0513,"","","","","logOR","logOR"],["CD009749__A7","CD010001__A3","CD009749","CD010001","significance",0.473066,0.681833,0.380171,0.0,false,true,2,0.0513,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A4","CD013232","CD014965","none",0.148873,-0.173071,0.176081,0.772996,false,false,2,0.05,"","","","","logOR","logOR"],["CD009749__A6","CD010001__A3","CD009749","CD010001","none",0.740918,0.681833,0.000943,0.0,true,true,2,0.0488,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A6","CD013232","CD014965","none",0.148873,0.222912,0.176081,0.672617,false,false,2,0.0488,"","","","","logOR","logOR"],["CD011841__A1","CD013763__A9","CD011841","CD013763","significance",-0.50004,-0.791754,0.081988,0.029745,false,true,2,0.0476,"","","","","logOR","logOR"],["CD002042__A20","CD009752__A9","CD002042","CD009752","none",-0.019431,0.497168,0.838978,0.545239,false,false,2,0.0476,"","","","","logOR","logOR"],["CD002042__A20","CD009752__A10","CD002042","CD009752","none",-0.019431,-0.001022,0.838978,0.999057,false,false,2,0.0465,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A2","CD013232","CD014965","significance",0.148873,0.871271,0.176081,0.014083,false,true,2,0.0455,"","","","","logOR","logOR"],["CD013232__A4","CD014965__A3","CD013232","CD014965","none",0.148873,0.668097,0.176081,0.067291,false,false,2,0.0455,"","","","","logOR","logOR"],["CD014300__A13","CD014722__A3","CD014300","CD014722","none",-0.076719,-0.177832,0.783104,0.382108,false,false,2,0.0455,"","","","","logOR","logOR"],["CD008552__A1","CD008709__A2","CD008552","CD008709","none",-0.206824,-0.355299,0.494226,0.209349,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A5","CD008709__A2","CD008552","CD008709","none",-0.183737,-0.355299,0.552571,0.209349,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A6","CD008709__A2","CD008552","CD008709","none",-0.1796,-0.355299,0.561517,0.209349,false,false,2,0.0435,"","","","","logOR","logOR"],["CD011841__A1","CD013763__A8","CD011841","CD013763","significance",-0.50004,-0.98276,0.081988,0.000258,false,true,2,0.0435,"","","","","logOR","logOR"],["CD011841__A3","CD013763__A11","CD011841","CD013763","none",-0.141184,0.140038,0.638413,0.474605,false,false,2,0.0435,"","","","","logOR","logOR"],["CD002042__A7","CD009752__A9","CD002042","CD009752","none",-0.006395,0.497168,0.918546,0.545239,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A1","CD015326__A28","CD008552","CD015326","none",-0.206824,-0.138581,0.494226,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A1","CD015326__A29","CD008552","CD015326","none",-0.206824,-0.138581,0.494226,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A1","CD015326__A30","CD008552","CD015326","none",-0.206824,-0.138581,0.494226,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A1","CD015326__A38","CD008552","CD015326","none",-0.206824,-0.138581,0.494226,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A5","CD015326__A28","CD008552","CD015326","none",-0.183737,-0.138581,0.552571,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A5","CD015326__A29","CD008552","CD015326","none",-0.183737,-0.138581,0.552571,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A5","CD015326__A30","CD008552","CD015326","none",-0.183737,-0.138581,0.552571,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A5","CD015326__A38","CD008552","CD015326","none",-0.183737,-0.138581,0.552571,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A6","CD015326__A28","CD008552","CD015326","none",-0.1796,-0.138581,0.561517,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A6","CD015326__A29","CD008552","CD015326","none",-0.1796,-0.138581,0.561517,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A6","CD015326__A30","CD008552","CD015326","none",-0.1796,-0.138581,0.561517,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD008552__A6","CD015326__A38","CD008552","CD015326","none",-0.1796,-0.138581,0.561517,0.872153,false,false,2,0.0435,"","","","","logOR","logOR"],["CD002042__A20","CD009752__A1","CD002042","CD009752","none",-0.019431,-0.269495,0.838978,0.512156,false,false,2,0.0426,"","","","","logOR","logOR"],["CD002042__A7","CD009752__A10","CD002042","CD009752","none",-0.006395,-0.001022,0.918546,0.999057,false,false,2,0.0426,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A11","CD013232","CD014965","none",-0.11477,0.606485,0.682184,0.413821,false,false,2,0.0426,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A27","CD013232","CD014965","none",-0.11477,-0.057964,0.682184,0.957947,false,false,2,0.0417,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A9","CD013232","CD014965","none",-0.11477,0.591308,0.682184,0.455908,false,false,2,0.0417,"","","","","logOR","logOR"],["CD009749__A2","CD010001__A4","CD009749","CD010001","none",0.809335,0.486424,0.002921,1e-06,true,true,2,0.0408,"","","","","logOR","logOR"],["CD008552__A1","CD015326__A8","CD008552","CD015326","none",-0.206824,-0.089458,0.494226,0.896876,false,false,2,0.0408,"","","","","logOR","logOR"],["CD008552__A5","CD015326__A8","CD008552","CD015326","none",-0.183737,-0.089458,0.552571,0.896876,false,false,2,0.0408,"","","","","logOR","logOR"],["CD008552__A6","CD015326__A8","CD008552","CD015326","none",-0.1796,-0.089458,0.561517,0.896876,false,false,2,0.0408,"","","","","logOR","logOR"],["CD002042__A9","CD009752__A9","CD002042","CD009752","none",0.003702,0.497168,0.944498,0.545239,false,false,2,0.04,"","","","","logOR","logOR"],["CD008165__A1","CD016064__A3","CD008165","CD016064","none",0.02396,-0.05623,0.974036,0.806419,false,false,2,0.04,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A13","CD013232","CD014965","significance",-0.11477,1.876395,0.682184,0.002282,false,true,2,0.04,"","","","","logOR","logOR"],["CD002042__A4","CD009752__A9","CD002042","CD009752","significance",-2.210521,0.497168,0.0,0.545239,true,false,2,0.0392,"","","","","logOR","logOR"],["CD002042__A7","CD009752__A1","CD002042","CD009752","none",-0.006395,-0.269495,0.918546,0.512156,false,false,2,0.0392,"","","","","logOR","logOR"],["CD002042__A9","CD009752__A10","CD002042","CD009752","none",0.003702,-0.001022,0.944498,0.999057,false,false,2,0.0392,"","","","","logOR","logOR"],["CD003331__A8","CD013508__A1","CD003331","CD013508","none",-0.126769,0.011953,0.701175,0.97858,false,false,2,0.0392,"","","","","logOR","logOR"],["CD009749__A7","CD010001__A4","CD009749","CD010001","significance",0.473066,0.486424,0.380171,1e-06,false,true,2,0.0392,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A4","CD013232","CD014965","none",-0.11477,-0.173071,0.682184,0.772996,false,false,2,0.0392,"","","","","logOR","logOR"],["CD002042__A4","CD009752__A10","CD002042","CD009752","significance",-2.210521,-0.001022,0.0,0.999057,true,false,2,0.0385,"","","","","logOR","logOR"],["CD003331__A1","CD013508__A1","CD003331","CD013508","none",-0.095195,0.011953,0.515563,0.97858,false,false,2,0.0385,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A14","CD013232","CD014965","significance",-0.11477,1.530006,0.682184,0.001691,false,true,2,0.0385,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A24","CD013232","CD014965","none",-0.11477,-0.016582,0.682184,0.982063,false,false,2,0.0385,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A25","CD013232","CD014965","none",-0.11477,-0.007999,0.682184,0.991347,false,false,2,0.0385,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A26","CD013232","CD014965","none",-0.11477,-0.011412,0.682184,0.987655,false,false,2,0.0385,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A6","CD013232","CD014965","none",-0.11477,0.222912,0.682184,0.672617,false,false,2,0.0385,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A12","CD013232","CD014965","significance",0.22549,1.00038,0.00607,0.215714,true,false,2,0.0385,"","","","","logOR","logOR"],["CD002042__A8","CD009752__A9","CD002042","CD009752","none",0.010187,0.497168,0.841818,0.545239,false,false,2,0.0377,"","","","","logOR","logOR"],["CD009749__A6","CD010001__A4","CD009749","CD010001","none",0.740918,0.486424,0.000943,1e-06,true,true,2,0.0377,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A22","CD013232","CD014965","significance",0.22549,1.685352,0.00607,0.166542,true,false,2,0.0377,"","","","","logOR","logOR"],["CD002042__A6","CD009752__A9","CD002042","CD009752","none",0.017282,0.497168,0.734247,0.545239,false,false,2,0.037,"","","","","logOR","logOR"],["CD002042__A8","CD009752__A10","CD002042","CD009752","none",0.010187,-0.001022,0.841818,0.999057,false,false,2,0.037,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A5","CD013232","CD014965","significance",-0.11477,0.951587,0.682184,0.009846,false,true,2,0.037,"","","","","logOR","logOR"],["CD013232__A9","CD014965__A8","CD013232","CD014965","significance",0.22549,-0.967367,0.00607,0.353872,true,false,2,0.037,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A12","CD013232","CD014965","significance",0.515932,1.00038,0.0,0.215714,true,false,2,0.037,"","","","","logOR","logOR"],["CD002042__A6","CD009752__A10","CD002042","CD009752","none",0.017282,-0.001022,0.734247,0.999057,false,false,2,0.0364,"","","","","logOR","logOR"],["CD002042__A9","CD009752__A1","CD002042","CD009752","none",0.003702,-0.269495,0.944498,0.512156,false,false,2,0.0364,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A7","CD013232","CD014965","none",-0.11477,0.135131,0.682184,0.810103,false,false,2,0.0364,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A10","CD013232","CD014965","significance",0.515932,0.049554,0.0,0.969981,true,false,2,0.0364,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A22","CD013232","CD014965","significance",0.515932,1.685352,0.0,0.166542,true,false,2,0.0364,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A12","CD013232","CD014965","none",0.05166,1.00038,0.469888,0.215714,false,false,2,0.0364,"","","","","logOR","logOR"],["CD002042__A4","CD009752__A1","CD002042","CD009752","significance",-2.210521,-0.269495,0.0,0.512156,true,false,2,0.0357,"","","","","logOR","logOR"],["CD011535__A3","CD014741__A3","CD011535","CD014741","direct",-0.918465,0.327701,0.040166,0.009291,true,true,2,0.0357,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A11","CD013232","CD014965","none",0.05166,0.606485,0.469888,0.413821,false,false,2,0.0357,"","","","","logOR","logOR"],["CD013232__A7","CD014965__A8","CD013232","CD014965","significance",0.515932,-0.967367,0.0,0.353872,true,false,2,0.0357,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A22","CD013232","CD014965","none",0.05166,1.685352,0.469888,0.166542,false,false,2,0.0357,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A12","CD013232","CD014965","none",0.195297,1.00038,0.056101,0.215714,false,false,2,0.0357,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A8","CD013232","CD014965","significance",0.482682,-0.967367,3.3e-05,0.353872,true,false,2,0.0357,"","","","","logOR","logOR"],["CD006536__A1","CD012712__A4","CD006536","CD012712","none",-0.245555,-0.252612,0.002148,0.000803,true,true,2,0.0351,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A11","CD013232","CD014965","none",0.195297,0.606485,0.056101,0.413821,false,false,2,0.0351,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A27","CD013232","CD014965","none",0.05166,-0.057964,0.469888,0.957947,false,false,2,0.0351,"","","","","logOR","logOR"],["CD013232__A8","CD014965__A9","CD013232","CD014965","none",0.05166,0.591308,0.469888,0.455908,false,false,2,0.0351,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A22","CD013232","CD014965","none",0.195297,1.685352,0.056101,0.166542,false,false,2,0.0351,"","","","","logOR","logOR"],["CD013614__A14","CD014741__A4","CD013614","CD014741","none",0.035286,-0.138152,0.823773,0.328936,false,false,2,0.0351,"","","","","logOR","logOR"],["CD002042__A8","CD009752__A1","CD002042","CD009752","none",0.010187,-0.269495,0.841818,0.512156,false,false,2,0.0345,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A9","CD013232","CD014965","none",0.195297,0.591308,0.056101,0.455908,false,false,2,0.0345,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A22","CD013232","CD014965","none",0.125876,1.685352,0.361807,0.166542,false,false,2,0.0345,"","","","","logOR","logOR"],["CD013614__A15","CD014741__A4","CD013614","CD014741","none",0.028555,-0.138152,0.856953,0.328936,false,false,2,0.0345,"","","","","logOR","logOR"],["CD002042__A6","CD009752__A1","CD002042","CD009752","none",0.017282,-0.269495,0.734247,0.512156,false,false,2,0.0339,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A20","CD013232","CD014965","none",0.125876,0.31261,0.361807,0.70251,false,false,2,0.0339,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A9","CD013232","CD014965","none",0.125876,0.591308,0.361807,0.455908,false,false,2,0.0339,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A4","CD013232","CD014965","significance",0.482682,-0.173071,3.3e-05,0.772996,true,false,2,0.0339,"","","","","logOR","logOR"],["CD013614__A16","CD014741__A4","CD013614","CD014741","none",0.27626,-0.138152,0.108984,0.328936,false,false,2,0.0339,"","","","","logOR","logOR"],["CD002042__A1","CD009752__A9","CD002042","CD009752","significance",-2.358465,0.497168,0.0,0.545239,true,false,2,0.0333,"","","","","logOR","logOR"],["CD002042__A2","CD009752__A9","CD002042","CD009752","significance",-2.422888,0.497168,0.0,0.545239,true,false,2,0.0333,"","","","","logOR","logOR"],["CD006919__A3","CD012586__A4","CD006919","CD012586","none",0.086924,0.118775,0.513344,0.24531,false,false,2,0.0333,"","","","","logOR","logOR"],["CD013232__A15","CD014965__A1","CD013232","CD014965","none",-0.11477,0.601531,0.682184,0.07231,false,false,2,0.0333,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A6","CD013232","CD014965","significance",0.482682,0.222912,3.3e-05,0.672617,true,false,2,0.0333,"","","","","logOR","logOR"],["CD001431__A6","CD013822__A7","CD001431","CD013822","none",0.276397,0.007079,0.157003,0.992305,false,false,2,0.0328,"","","","","logOR","logOR"],["CD002042__A1","CD009752__A10","CD002042","CD009752","significance",-2.358465,-0.001022,0.0,0.999057,true,false,2,0.0328,"","","","","logOR","logOR"],["CD002042__A2","CD009752__A10","CD002042","CD009752","significance",-2.422888,-0.001022,0.0,0.999057,true,false,2,0.0328,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A13","CD013232","CD014965","significance",0.125876,1.876395,0.361807,0.002282,false,true,2,0.0328,"","","","","logOR","logOR"],["CD001431__A6","CD013822__A4","CD001431","CD013822","none",0.276397,0.071686,0.157003,0.927646,false,false,2,0.0323,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A5","CD013232","CD014965","none",0.482682,0.951587,3.3e-05,0.009846,true,true,2,0.0323,"","","","","logOR","logOR"],["CD013614__A1","CD014741__A4","CD013614","CD014741","significance",1.472071,-0.138152,0.0,0.328936,true,false,2,0.0323,"","","","","logOR","logOR"],["CD013614__A14","CD014741__A5","CD013614","CD014741","none",0.035286,-0.281322,0.823773,0.344391,false,false,2,0.0323,"","","","","logOR","logOR"],["CD006023__A11","CD014758__A2","CD006023","CD014758","none",-0.182258,-0.155927,0.339986,0.471086,false,false,2,0.0317,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A11","CD013232","CD014965","significance",0.342491,0.606485,2e-06,0.413821,true,false,2,0.0317,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A22","CD013232","CD014965","significance",0.342491,1.685352,2e-06,0.166542,true,false,2,0.0317,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A2","CD013232","CD014965","none",0.482682,0.871271,3.3e-05,0.014083,true,true,2,0.0317,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A3","CD013232","CD014965","significance",0.482682,0.668097,3.3e-05,0.067291,true,false,2,0.0317,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A7","CD013232","CD014965","significance",0.482682,0.135131,3.3e-05,0.810103,true,false,2,0.0317,"","","","","logOR","logOR"],["CD013614__A15","CD014741__A5","CD013614","CD014741","none",0.028555,-0.281322,0.856953,0.344391,false,false,2,0.0317,"","","","","logOR","logOR"],["CD001431__A6","CD013822__A1","CD001431","CD013822","none",0.276397,-0.137949,0.157003,0.688921,false,false,2,0.0312,"","","","","logOR","logOR"],["CD012712__A1","CD014758__A2","CD012712","CD014758","none",0.159945,-0.155927,0.151238,0.471086,false,false,2,0.0312,"","","","","logOR","logOR"],["CD012712__A3","CD014758__A2","CD012712","CD014758","significance",-0.245619,-0.155927,0.041032,0.471086,true,false,2,0.0312,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A20","CD013232","CD014965","significance",0.342491,0.31261,2e-06,0.70251,true,false,2,0.0312,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A9","CD013232","CD014965","significance",0.342491,0.591308,2e-06,0.455908,true,false,2,0.0312,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A8","CD013232","CD014965","significance",0.342491,-0.967367,2e-06,0.353872,true,false,2,0.0312,"","","","","logOR","logOR"],["CD013614__A16","CD014741__A5","CD013614","CD014741","none",0.27626,-0.281322,0.108984,0.344391,false,false,2,0.0312,"","","","","logOR","logOR"],["CD002042__A1","CD009752__A1","CD002042","CD009752","significance",-2.358465,-0.269495,0.0,0.512156,true,false,2,0.0308,"","","","","logOR","logOR"],["CD002042__A2","CD009752__A1","CD002042","CD009752","significance",-2.422888,-0.269495,0.0,0.512156,true,false,2,0.0308,"","","","","logOR","logOR"],["CD012712__A6","CD014758__A2","CD012712","CD014758","significance",-0.218411,-0.155927,0.021938,0.471086,true,false,2,0.0308,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A2","CD013232","CD014965","significance",0.195297,0.871271,0.056101,0.014083,false,true,2,0.0308,"","","","","logOR","logOR"],["CD013232__A14","CD014965__A3","CD013232","CD014965","none",0.195297,0.668097,0.056101,0.067291,false,false,2,0.0308,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A2","CD013232","CD014965","significance",0.125876,0.871271,0.361807,0.014083,false,true,2,0.0303,"","","","","logOR","logOR"],["CD013232__A16","CD014965__A3","CD013232","CD014965","none",0.125876,0.668097,0.361807,0.067291,false,false,2,0.0303,"","","","","logOR","logOR"],["CD013232__A3","CD014965__A13","CD013232","CD014965","magnitude",0.342491,1.876395,2e-06,0.002282,true,true,2,0.0303,"","","","","logOR","logOR"],["CD008165__A1","CD016064__A2","CD008165","CD016064","none",0.02396,-0.069044,0.974036,0.672424,false,false,2,0.0299,"","","","","logOR","logOR"],["CD013614__A1","CD014741__A5","CD013614","CD014741","significance",1.472071,-0.281322,0.0,0.344391,true,false,2,0.0299,"","","","","logOR","logOR"],["CD013232__A5","CD014965__A1","CD013232","CD014965","significance",0.482682,0.601531,3.3e-05,0.07231,true,false,2,0.0294,"","","","","logOR","logOR"],["CD015014__A17","CD016064__A1","CD015014","CD016064","none",-0.225828,-0.066284,0.89958,0.645116,false,false,2,0.0294,"","","","","logOR","logOR"],["CD006919__A4","CD012586__A4","CD006919","CD012586","significance",0.338216,0.118775,0.011799,0.24531,true,false,2,0.0286,"","","","","logOR","logOR"],["CD012712__A7","CD014758__A2","CD012712","CD014758","significance",-0.258475,-0.155927,0.002533,0.471086,true,false,2,0.0286,"","","","","logOR","logOR"],["CD011841__A2","CD013763__A2","CD011841","CD013763","none",0.038776,-0.221646,0.87797,0.363037,false,false,2,0.0282,"","","","","logOR","logOR"],["CD012712__A10","CD014758__A2","CD012712","CD014758","none",-0.144587,-0.155927,0.529016,0.471086,false,false,2,0.0282,"","","","","logOR","logOR"],["CD012712__A5","CD014758__A2","CD012712","CD014758","significance",-0.158801,-0.155927,0.008725,0.471086,true,false,2,0.0282,"","","","","logOR","logOR"],["CD006023__A17","CD008349__A8","CD006023","CD008349","none",0.135465,-0.036196,0.657277,0.895606,false,false,2,0.0274,"","","","","logOR","logOR"],["CD014964__A7","CD015328__A5","CD014964","CD015328","magnitude",-0.441813,-0.047696,0.033571,0.00019,true,true,2,0.0274,"","","","","logOR","GIV"],["CD002290__A1","CD003594__A2","CD002290","CD003594","significance",-0.991873,0.205681,0.0,0.318623,true,false,2,0.027,"","","","","logOR","logOR"],["CD012712__A4","CD014758__A2","CD012712","CD014758","significance",-0.252612,-0.155927,0.000803,0.471086,true,false,2,0.027,"","","","","logOR","logOR"],["CD010216__A3","CD015120__A1","CD010216","CD015120","none",0.032611,0.402235,0.733197,0.117576,false,false,2,0.0267,"","","","","logOR","logOR"],["CD012712__A2","CD014758__A2","CD012712","CD014758","significance",-0.829392,-0.155927,0.0,0.471086,true,false,2,0.0267,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A12","CD013232","CD014965","none",-0.014119,1.00038,0.948799,0.215714,false,false,2,0.0263,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A10","CD013232","CD014965","none",-0.014119,0.049554,0.948799,0.969981,false,false,2,0.026,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A23","CD013232","CD014965","none",-0.014119,-0.169619,0.948799,0.691849,false,false,2,0.026,"","","","","logOR","logOR"],["CD011841__A1","CD013763__A2","CD011841","CD013763","none",-0.50004,-0.221646,0.081988,0.363037,false,false,2,0.0256,"","","","","logOR","logOR"],["CD013232__A1","CD014965__A16","CD013232","CD014965","none",-0.014119,0.895015,0.948799,0.17026,false,false,2,0.0256,"","","","","logOR","logOR"],["CD001155__A2","CD003376__A1","CD001155","CD003376","significance",-0.08039,-0.097953,1.5e-05,0.353746,true,false,2,0.0244,"","","","","logOR","logOR"],["CD006023__A19","CD008349__A8","CD006023","CD008349","none",0.268592,-0.036196,0.411412,0.895606,false,false,2,0.0244,"","","","","logOR","logOR"],["CD006023__A11","CD014758__A1","CD006023","CD014758","none",-0.182258,-0.109118,0.339986,0.546614,false,false,2,0.0233,"","","","","logOR","logOR"],["CD012712__A1","CD014758__A1","CD012712","CD014758","none",0.159945,-0.109118,0.151238,0.546614,false,false,2,0.023,"","","","","logOR","logOR"],["CD012712__A3","CD014758__A1","CD012712","CD014758","significance",-0.245619,-0.109118,0.041032,0.546614,true,false,2,0.023,"","","","","logOR","logOR"],["CD012186__A1","CD015443__A3","CD012186","CD015443","none",0.009306,-0.361814,0.769412,0.058275,false,false,2,0.0227,"","","","","logOR","logOR"],["CD012712__A6","CD014758__A1","CD012712","CD014758","significance",-0.218411,-0.109118,0.021938,0.546614,true,false,2,0.0227,"","","","","logOR","logOR"],["CD006185__A3","CD008349__A9","CD006185","CD008349","none",-0.096344,-0.034536,0.554236,0.952452,false,false,2,0.0225,"","","","","logOR","logOR"],["CD012186__A1","CD013874__A6","CD012186","CD013874","none",0.009306,0.625133,0.769412,0.365146,false,false,2,0.0225,"","","","","logOR","logOR"],["CD012186__A1","CD013874__A5","CD012186","CD013874","significance",0.009306,-1.807803,0.769412,0.003468,false,true,2,0.0222,"","","","","logOR","logOR"],["CD015014__A32","CD016064__A1","CD015014","CD016064","none",0.056688,-0.066284,0.507673,0.645116,false,false,2,0.0222,"","","","","logOR","logOR"],["CD015014__A33","CD016064__A1","CD015014","CD016064","none",0.056688,-0.066284,0.507673,0.645116,false,false,2,0.0222,"","","","","logOR","logOR"],["CD015014__A34","CD016064__A1","CD015014","CD016064","none",0.056326,-0.066284,0.510357,0.645116,false,false,2,0.0222,"","","","","logOR","logOR"],["CD008063__A1","CD015673__A5","CD008063","CD015673","none",0.01333,-0.233985,0.935813,0.109861,false,false,2,0.022,"","","","","logOR","logOR"],["CD012186__A1","CD013874__A3","CD012186","CD013874","significance",0.009306,-1.192128,0.769412,0.007234,false,true,2,0.0217,"","","","","logOR","logOR"],["CD008063__A1","CD015673__A3","CD008063","CD015673","none",0.01333,-0.154424,0.935813,0.440851,false,false,2,0.0215,"","","","","logOR","logOR"],["CD012186__A1","CD013874__A4","CD012186","CD013874","significance",0.009306,-0.972305,0.769412,0.000514,false,true,2,0.0215,"","","","","logOR","logOR"],["CD012712__A7","CD014758__A1","CD012712","CD014758","significance",-0.258475,-0.109118,0.002533,0.546614,true,false,2,0.0215,"","","","","logOR","logOR"],["CD001920__A7","CD016002__A13","CD001920","CD016002","significance",-0.048287,0.076513,0.790273,0.006883,false,true,2,0.0213,"","","","","logOR","MD"],["CD001920__A5","CD016002__A21","CD001920","CD016002","none",-0.218259,1.871058,0.093125,0.410138,false,false,2,0.0213,"","","","","logOR","MD"],["CD012712__A10","CD014758__A1","CD012712","CD014758","none",-0.144587,-0.109118,0.529016,0.546614,false,false,2,0.0213,"","","","","logOR","logOR"],["CD012712__A5","CD014758__A1","CD012712","CD014758","significance",-0.158801,-0.109118,0.008725,0.546614,true,false,2,0.0213,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A4","CD001920","CD016002","none",-0.218259,0.913339,0.093125,0.089042,false,false,2,0.0211,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A19","CD001920","CD016002","none",-0.218259,1.441277,0.093125,0.512102,false,false,2,0.0211,"","","","","logOR","MD"],["CD004376__A6","CD013342__A1","CD004376","CD013342","significance",0.388112,-0.258702,0.005084,0.326932,true,false,2,0.0211,"","","","","logOR","logOR"],["CD004376__A6","CD013342__A2","CD004376","CD013342","significance",0.388112,-0.384277,0.005084,0.211719,true,false,2,0.0211,"","","","","logOR","logOR"],["CD001431__A5","CD013822__A7","CD001431","CD013822","significance",0.115555,0.007079,0.035738,0.992305,true,false,2,0.0206,"","","","","logOR","logOR"],["CD001920__A7","CD016002__A16","CD001920","CD016002","significance",-0.048287,1.048288,0.790273,0.024124,false,true,2,0.0206,"","","","","logOR","MD"],["CD001920__A5","CD016002__A7","CD001920","CD016002","none",-0.218259,2.285617,0.093125,0.101617,false,false,2,0.0206,"","","","","logOR","MD"],["CD001920__A5","CD016002__A24","CD001920","CD016002","none",-0.218259,-0.022964,0.093125,0.76247,false,false,2,0.0206,"","","","","logOR","MD"],["CD012186__A1","CD013874__A1","CD012186","CD013874","significance",0.009306,-0.628052,0.769412,0.00788,false,true,2,0.0206,"","","","","logOR","logOR"],["CD012712__A4","CD014758__A1","CD012712","CD014758","significance",-0.252612,-0.109118,0.000803,0.546614,true,false,2,0.0206,"","","","","logOR","logOR"],["CD001431__A5","CD013822__A4","CD001431","CD013822","significance",0.115555,0.071686,0.035738,0.927646,true,false,2,0.0204,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A18","CD001920","CD016002","none",-0.218259,0.051709,0.093125,0.636793,false,false,2,0.0204,"","","","","logOR","MD"],["CD012186__A1","CD013874__A2","CD012186","CD013874","none",0.009306,-0.278968,0.769412,0.314638,false,false,2,0.0204,"","","","","logOR","logOR"],["CD012712__A2","CD014758__A1","CD012712","CD014758","significance",-0.829392,-0.109118,0.0,0.546614,true,false,2,0.0204,"","","","","logOR","logOR"],["CD001431__A5","CD013822__A1","CD001431","CD013822","significance",0.115555,-0.137949,0.035738,0.688921,true,false,2,0.02,"","","","","logOR","logOR"],["CD006919__A3","CD012586__A2","CD006919","CD012586","significance",0.086924,-0.243407,0.513344,0.000486,false,true,2,0.02,"","","","","logOR","logOR"],["CD006185__A3","CD008349__A11","CD006185","CD008349","none",-0.096344,0.006565,0.554236,0.986989,false,false,2,0.0196,"","","","","logOR","logOR"],["CD014964__A1","CD015328__A5","CD014964","CD015328","direct",0.64396,-0.047696,5e-06,0.00019,true,true,2,0.0194,"","","","","logOR","GIV"],["CD014964__A2","CD015328__A5","CD014964","CD015328","direct",0.557049,-0.047696,3.8e-05,0.00019,true,true,2,0.0192,"","","","","logOR","GIV"],["CD014964__A4","CD015328__A5","CD014964","CD015328","direct",0.96559,-0.047696,0.0,0.00019,true,true,2,0.0192,"","","","","logOR","GIV"],["CD012186__A2","CD015443__A9","CD012186","CD015443","significance",0.317869,-0.341617,7.8e-05,0.849247,true,false,2,0.019,"","","","","logOR","logOR"],["CD014964__A3","CD015328__A5","CD014964","CD015328","direct",0.64321,-0.047696,0.0,0.00019,true,true,2,0.019,"","","","","logOR","GIV"],["CD014964__A5","CD015328__A5","CD014964","CD015328","direct",0.784681,-0.047696,0.0,0.00019,true,true,2,0.019,"","","","","logOR","GIV"],["CD006023__A4","CD014758__A2","CD006023","CD014758","significance",0.405723,-0.155927,0.004486,0.471086,true,false,2,0.0189,"","","","","logOR","logOR"],["CD006023__A5","CD014758__A2","CD006023","CD014758","none",0.049513,-0.155927,0.576482,0.471086,false,false,2,0.0189,"","","","","logOR","logOR"],["CD001431__A4","CD013822__A7","CD001431","CD013822","significance",0.311176,0.007079,7.5e-05,0.992305,true,false,2,0.0187,"","","","","logOR","logOR"],["CD004376__A4","CD013342__A1","CD004376","CD013342","significance",0.797151,-0.258702,0.005261,0.326932,true,false,2,0.0187,"","","","","logOR","logOR"],["CD004376__A4","CD013342__A2","CD004376","CD013342","significance",0.797151,-0.384277,0.005261,0.211719,true,false,2,0.0187,"","","","","logOR","logOR"],["CD001920__A5","CD016002__A16","CD001920","CD016002","significance",-0.218259,1.048288,0.093125,0.024124,false,true,2,0.0185,"","","","","logOR","MD"],["CD012186__A2","CD013874__A6","CD012186","CD013874","significance",0.317869,0.625133,7.8e-05,0.365146,true,false,2,0.0183,"","","","","logOR","logOR"],["CD001431__A4","CD013822__A1","CD001431","CD013822","significance",0.311176,-0.137949,7.5e-05,0.688921,true,false,2,0.0182,"","","","","logOR","logOR"],["CD006919__A4","CD012586__A2","CD006919","CD012586","direct",0.338216,-0.243407,0.011799,0.000486,true,true,2,0.0182,"","","","","logOR","logOR"],["CD012186__A2","CD013874__A5","CD012186","CD013874","direct",0.317869,-1.807803,7.8e-05,0.003468,true,true,2,0.0182,"","","","","logOR","logOR"],["CD006185__A7","CD008349__A9","CD006185","CD008349","none",-0.104059,-0.034536,0.349626,0.952452,false,false,2,0.0179,"","","","","logOR","logOR"],["CD006185__A8","CD008349__A9","CD006185","CD008349","none",-0.059429,-0.034536,0.76575,0.952452,false,false,2,0.0179,"","","","","logOR","logOR"],["CD006023__A6","CD014758__A2","CD006023","CD014758","none",-0.107936,-0.155927,0.290655,0.471086,false,false,2,0.0179,"","","","","logOR","logOR"],["CD012186__A2","CD013874__A3","CD012186","CD013874","direct",0.317869,-1.192128,7.8e-05,0.007234,true,true,2,0.0179,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A21","CD001920","CD016002","none",0.144147,1.871058,0.307436,0.410138,false,false,2,0.0177,"","","","","logOR","MD"],["CD012186__A2","CD013874__A4","CD012186","CD013874","direct",0.317869,-0.972305,7.8e-05,0.000514,true,true,2,0.0177,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A19","CD001920","CD016002","none",0.144147,1.441277,0.307436,0.512102,false,false,2,0.0175,"","","","","logOR","MD"],["CD006023__A6","CD008349__A8","CD006023","CD008349","none",-0.107936,-0.036196,0.290655,0.895606,false,false,2,0.0174,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A7","CD001920","CD016002","none",0.144147,2.285617,0.307436,0.101617,false,false,2,0.0172,"","","","","logOR","MD"],["CD001920__A6","CD016002__A24","CD001920","CD016002","none",0.144147,-0.022964,0.307436,0.76247,false,false,2,0.0172,"","","","","logOR","MD"],["CD001920__A6","CD016002__A18","CD001920","CD016002","none",0.144147,0.051709,0.307436,0.636793,false,false,2,0.0171,"","","","","logOR","MD"],["CD004376__A3","CD013342__A1","CD004376","CD013342","significance",-0.888589,-0.258702,1.5e-05,0.326932,true,false,2,0.0171,"","","","","MD","logOR"],["CD004376__A3","CD013342__A2","CD004376","CD013342","significance",-0.888589,-0.384277,1.5e-05,0.211719,true,false,2,0.0171,"","","","","MD","logOR"],["CD012186__A2","CD013874__A1","CD012186","CD013874","direct",0.317869,-0.628052,7.8e-05,0.00788,true,true,2,0.0171,"","","","","logOR","logOR"],["CD001920__A1","CD016002__A21","CD001920","CD016002","none",-0.042121,1.871058,0.757753,0.410138,false,false,2,0.0169,"","","","","logOR","MD"],["CD012186__A2","CD013874__A2","CD012186","CD013874","significance",0.317869,-0.278968,7.8e-05,0.314638,true,false,2,0.0169,"","","","","logOR","logOR"],["CD001920__A1","CD016002__A4","CD001920","CD016002","none",-0.042121,0.913339,0.757753,0.089042,false,false,2,0.0168,"","","","","logOR","logOR"],["CD001920__A1","CD016002__A19","CD001920","CD016002","none",-0.042121,1.441277,0.757753,0.512102,false,false,2,0.0168,"","","","","logOR","MD"],["CD001920__A1","CD016002__A7","CD001920","CD016002","none",-0.042121,2.285617,0.757753,0.101617,false,false,2,0.0165,"","","","","logOR","MD"],["CD001920__A1","CD016002__A24","CD001920","CD016002","none",-0.042121,-0.022964,0.757753,0.76247,false,false,2,0.0165,"","","","","logOR","MD"],["CD001920__A1","CD016002__A18","CD001920","CD016002","none",-0.042121,0.051709,0.757753,0.636793,false,false,2,0.0164,"","","","","logOR","MD"],["CD006023__A1","CD014758__A2","CD006023","CD014758","significance",-0.491044,-0.155927,0.0,0.471086,true,false,2,0.0163,"","","","","logOR","logOR"],["CD001920__A2","CD016002__A21","CD001920","CD016002","none",-0.05989,1.871058,0.620428,0.410138,false,false,2,0.0161,"","","","","logOR","MD"],["CD001920__A2","CD016002__A4","CD001920","CD016002","none",-0.05989,0.913339,0.620428,0.089042,false,false,2,0.016,"","","","","logOR","logOR"],["CD001920__A2","CD016002__A19","CD001920","CD016002","none",-0.05989,1.441277,0.620428,0.512102,false,false,2,0.016,"","","","","logOR","MD"],["CD006185__A7","CD008349__A11","CD006185","CD008349","none",-0.104059,0.006565,0.349626,0.986989,false,false,2,0.016,"","","","","logOR","logOR"],["CD006185__A8","CD008349__A11","CD006185","CD008349","none",-0.059429,0.006565,0.76575,0.986989,false,false,2,0.016,"","","","","logOR","logOR"],["CD008063__A1","CD011866__A1","CD008063","CD011866","significance",0.01333,-0.290214,0.935813,0.002159,false,true,2,0.0159,"","","","","logOR","logOR"],["CD001920__A6","CD016002__A16","CD001920","CD016002","significance",0.144147,1.048288,0.307436,0.024124,false,true,2,0.0157,"","","","","logOR","MD"],["CD001920__A2","CD016002__A7","CD001920","CD016002","none",-0.05989,2.285617,0.620428,0.101617,false,false,2,0.0157,"","","","","logOR","MD"],["CD001920__A2","CD016002__A24","CD001920","CD016002","none",-0.05989,-0.022964,0.620428,0.76247,false,false,2,0.0157,"","","","","logOR","MD"],["CD001920__A2","CD016002__A18","CD001920","CD016002","none",-0.05989,0.051709,0.620428,0.636793,false,false,2,0.0156,"","","","","logOR","MD"],["CD001920__A1","CD016002__A13","CD001920","CD016002","significance",-0.042121,0.076513,0.757753,0.006883,false,true,2,0.0155,"","","","","logOR","MD"],["CD006023__A4","CD014758__A1","CD006023","CD014758","significance",0.405723,-0.109118,0.004486,0.546614,true,false,2,0.0155,"","","","","logOR","logOR"],["CD006023__A5","CD014758__A1","CD006023","CD014758","none",0.049513,-0.109118,0.576482,0.546614,false,false,2,0.0155,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A21","CD001920","CD016002","none",-0.04745,1.871058,0.73578,0.410138,false,false,2,0.0154,"","","","","logOR","MD"],["CD001920__A3","CD016002__A4","CD001920","CD016002","none",-0.04745,0.913339,0.73578,0.089042,false,false,2,0.0153,"","","","","logOR","logOR"],["CD001920__A3","CD016002__A19","CD001920","CD016002","none",-0.04745,1.441277,0.73578,0.512102,false,false,2,0.0153,"","","","","logOR","MD"],["CD001920__A3","CD016002__A7","CD001920","CD016002","none",-0.04745,2.285617,0.73578,0.101617,false,false,2,0.015,"","","","","logOR","MD"],["CD001920__A3","CD016002__A14","CD001920","CD016002","none",-0.04745,0.035488,0.73578,0.198879,false,false,2,0.015,"","","","","logOR","MD"],["CD001920__A3","CD016002__A24","CD001920","CD016002","none",-0.04745,-0.022964,0.73578,0.76247,false,false,2,0.015,"","","","","logOR","MD"],["CD001920__A3","CD016001__A16","CD001920","CD016001","significance",-0.04745,2.69631,0.73578,0.008788,false,true,2,0.015,"","","","","logOR","MD"],["CD001920__A3","CD016002__A18","CD001920","CD016002","none",-0.04745,0.051709,0.73578,0.636793,false,false,2,0.0149,"","","","","logOR","MD"],["CD001920__A2","CD016002__A13","CD001920","CD016002","significance",-0.05989,0.076513,0.620428,0.006883,false,true,2,0.0148,"","","","","logOR","MD"],["CD006023__A6","CD014758__A1","CD006023","CD014758","none",-0.107936,-0.109118,0.290655,0.546614,false,false,2,0.0148,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A14","CD012586","CD013827","none",-0.025822,-0.143667,0.31709,0.7371,false,false,2,0.0147,"","","","","logOR","logOR"],["CD012586__A1","CD013827__A7","CD012586","CD013827","none",-0.025822,-0.458748,0.31709,0.428455,false,false,2,0.0141,"","","","","logOR","logOR"],["CD004376__A2","CD013342__A1","CD004376","CD013342","significance",-4.881495,-0.258702,0.0,0.326932,true,false,2,0.0139,"","","","","MD","logOR"],["CD004376__A2","CD013342__A2","CD004376","CD013342","significance",-4.881495,-0.384277,0.0,0.211719,true,false,2,0.0139,"","","","","MD","logOR"],["CD006023__A1","CD014758__A1","CD006023","CD014758","significance",-0.491044,-0.109118,0.0,0.546614,true,false,2,0.0137,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A21","CD001920","CD016002","none",-0.04649,1.871058,0.719873,0.410138,false,false,2,0.0136,"","","","","logOR","MD"],["CD006185__A2","CD014758__A1","CD006185","CD014758","none",0.16495,-0.109118,0.20203,0.546614,false,false,2,0.0136,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A4","CD001920","CD016002","none",-0.04649,0.913339,0.719873,0.089042,false,false,2,0.0135,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A19","CD001920","CD016002","none",-0.04649,1.441277,0.719873,0.512102,false,false,2,0.0135,"","","","","logOR","MD"],["CD001920__A4","CD016002__A7","CD001920","CD016002","none",-0.04649,2.285617,0.719873,0.101617,false,false,2,0.0133,"","","","","logOR","MD"],["CD001920__A4","CD016002__A14","CD001920","CD016002","none",-0.04649,0.035488,0.719873,0.198879,false,false,2,0.0133,"","","","","logOR","MD"],["CD001920__A4","CD016002__A24","CD001920","CD016002","none",-0.04649,-0.022964,0.719873,0.76247,false,false,2,0.0133,"","","","","logOR","MD"],["CD004376__A5","CD013342__A1","CD004376","CD013342","none",-0.018535,-0.258702,0.756906,0.326932,false,false,2,0.0133,"","","","","logOR","logOR"],["CD004376__A5","CD013342__A2","CD004376","CD013342","none",-0.018535,-0.384277,0.756906,0.211719,false,false,2,0.0133,"","","","","logOR","logOR"],["CD001920__A4","CD016002__A18","CD001920","CD016002","none",-0.04649,0.051709,0.719873,0.636793,false,false,2,0.0132,"","","","","logOR","MD"],["CD001920__A4","CD016001__A13","CD001920","CD016001","none",-0.04649,0.016677,0.719873,0.679803,false,false,2,0.0132,"","","","","logOR","MD"],["CD006185__A3","CD014758__A1","CD006185","CD014758","none",-0.096344,-0.109118,0.554236,0.546614,false,false,2,0.0132,"","","","","logOR","logOR"],["CD001920__A3","CD016001__A1","CD001920","CD016001","none",-0.04745,-0.059172,0.73578,0.868594,false,false,2,0.0132,"","","","","logOR","logOR"],["CD001920__A4","CD016001__A17","CD001920","CD016001","significance",-0.04649,-3.960127,0.719873,0.016976,false,true,2,0.0131,"","","","","logOR","MD"],["CD004376__A1","CD013342__A1","CD004376","CD013342","significance",-1.844701,-0.258702,0.0,0.326932,true,false,2,0.013,"","","","","MD","logOR"],["CD004376__A1","CD013342__A2","CD004376","CD013342","significance",-1.844701,-0.384277,0.0,0.211719,true,false,2,0.013,"","","","","MD","logOR"],["CD001920__A4","CD016002__A17","CD001920","CD016002","significance",-0.04649,-1.611319,0.719873,0.006665,false,true,2,0.0129,"","","","","logOR","MD"],["CD001920__A4","CD008349__A9","CD001920","CD008349","none",-0.04649,-0.034536,0.719873,0.952452,false,false,2,0.0127,"","","","","logOR","logOR"],["CD004376__A4","CD006185__A3","CD004376","CD006185","significance",0.797151,-0.096344,0.005261,0.554236,true,false,2,0.0123,"","","","","logOR","logOR"],["CD001431__A2","CD013822__A7","CD001431","CD013822","significance",0.219602,0.007079,3e-06,0.992305,true,false,2,0.0122,"","","","","logOR","logOR"],["CD001431__A2","CD013822__A1","CD001431","CD013822","significance",0.219602,-0.137949,3e-06,0.688921,true,false,2,0.012,"","","","","logOR","logOR"],["CD001431__A3","CD013822__A7","CD001431","CD013822","significance",0.257195,0.007079,6e-06,0.992305,true,false,2,0.0118,"","","","","logOR","logOR"],["CD001431__A1","CD013822__A7","CD001431","CD013822","significance",0.10637,0.007079,0.015625,0.992305,true,false,2,0.0116,"","","","","logOR","logOR"],["CD001431__A3","CD013822__A1","CD001431","CD013822","significance",0.257195,-0.137949,6e-06,0.688921,true,false,2,0.0116,"","","","","logOR","logOR"],["CD004376__A6","CD006185__A7","CD004376","CD006185","significance",0.388112,-0.104059,0.005084,0.349626,true,false,2,0.0116,"","","","","logOR","logOR"],["CD004376__A6","CD006185__A8","CD004376","CD006185","significance",0.388112,-0.059429,0.005084,0.76575,true,false,2,0.0116,"","","","","logOR","logOR"],["CD006185__A7","CD014758__A1","CD006185","CD014758","none",-0.104059,-0.109118,0.349626,0.546614,false,false,2,0.0115,"","","","","logOR","logOR"],["CD006185__A8","CD014758__A1","CD006185","CD014758","none",-0.059429,-0.109118,0.76575,0.546614,false,false,2,0.0115,"","","","","logOR","logOR"],["CD011689__A1","CD012586__A1","CD011689","CD012586","none",0.055736,-0.025822,0.709853,0.31709,false,false,2,0.0115,"","","","","logOR","logOR"],["CD001431__A1","CD013822__A1","CD001431","CD013822","significance",0.10637,-0.137949,0.015625,0.688921,true,false,2,0.0114,"","","","","logOR","logOR"],["CD004376__A3","CD006185__A7","CD004376","CD006185","significance",-0.888589,-0.104059,1.5e-05,0.349626,true,false,2,0.0103,"","","","","MD","logOR"],["CD004376__A3","CD006185__A8","CD004376","CD006185","significance",-0.888589,-0.059429,1.5e-05,0.76575,true,false,2,0.0103,"","","","","MD","logOR"],["CD004376__A2","CD006185__A3","CD004376","CD006185","significance",-4.881495,-0.096344,0.0,0.554236,true,false,2,0.0101,"","","","","MD","logOR"],["CD004376__A5","CD006185__A3","CD004376","CD006185","none",-0.018535,-0.096344,0.756906,0.554236,false,false,2,0.0098,"","","","","logOR","logOR"],["CD011689__A3","CD012586__A1","CD011689","CD012586","significance",-0.220752,-0.025822,0.0,0.31709,true,false,2,0.0094,"","","","","logOR","logOR"],["CD011689__A6","CD012586__A1","CD011689","CD012586","none",-0.075361,-0.025822,0.060076,0.31709,false,false,2,0.0094,"","","","","logOR","logOR"],["CD011689__A2","CD012586__A1","CD011689","CD012586","significance",-0.127833,-0.025822,1.7e-05,0.31709,true,false,2,0.0093,"","","","","logOR","logOR"],["CD011689__A8","CD012586__A1","CD011689","CD012586","none",-0.021635,-0.025822,0.845283,0.31709,false,false,2,0.0091,"","","","","logOR","logOR"],["CD011689__A7","CD012586__A1","CD011689","CD012586","significance",-0.236916,-0.025822,1e-06,0.31709,true,false,2,0.0087,"","","","","logOR","logOR"]];
+
+var CM_SUMMARY = {
+  totalMAs: 5279,
+  totalStudies: 10004,
+  totalPairs: 881,
+  contradictions: { total: 431, direct: 30, significance: 375, magnitude: 26, none: 450, pct: 48.9 },
+  topReviews: [
+    ["CD013232",172],["CD014965",172],["CD012712",37],["CD012186",29],
+    ["CD001920",27],["CD015134",26],["CD016131",26],["CD016002",25],
+    ["CD013827",24],["CD004376",22]
+  ],
+  quality: {
+    contradicted_CRITICAL: 0.26, noncontradicted_CRITICAL: 0.076,
+    contradicted_FAIL: 0.845, noncontradicted_FAIL: 0.406,
+    contradicted_WARN: 1.411, noncontradicted_WARN: 0.962,
+    n_contradicted: 219, n_noncontradicted: 5060
+  }
+};
+
+var CM_CHORD_NODES = [
+  ["CD013232",172],["CD014965",172],["CD012712",37],["CD012186",29],
+  ["CD001920",27],["CD015134",26],["CD016131",26],["CD016002",25],
+  ["CD013827",24],["CD004376",22],["CD001431",19],["CD013822",19],
+  ["CD014758",16],["CD013874",14],["CD015443",13],["CD006185",12],
+  ["CD013054",11],["CD011381",10],["CD014741",10],["CD015215",10]
+];
+
+var CM_CHORD_EDGES = [
+  ["CD011381","CD012186","significance",8],
+  ["CD011381","CD012186","direct",2],
+  ["CD012186","CD015443","significance",7],
+  ["CD012186","CD015443","direct",2],
+  ["CD013232","CD014965","significance",145],
+  ["CD013232","CD014965","magnitude",21],
+  ["CD013232","CD014965","direct",6],
+  ["CD001920","CD016002","significance",25],
+  ["CD004376","CD006185","significance",12],
+  ["CD015134","CD016131","direct",1],
+  ["CD015134","CD016131","significance",25],
+  ["CD001431","CD013822","significance",19],
+  ["CD012712","CD013827","significance",24],
+  ["CD013874","CD015443","significance",4],
+  ["CD012712","CD014758","significance",12],
+  ["CD012186","CD013874","significance",6],
+  ["CD012186","CD013874","direct",4]
+];
+
+/* ============================================================
+   COLORS
+   ============================================================ */
+var COLORS = {
+  direct: '#ff4757',
+  significance: '#ff9f43',
+  magnitude: '#feca57',
+  none: '#26de81'
+};
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+function cmById(id) { return document.getElementById(id); }
+
+function formatNum(n) {
+  return n.toLocaleString('en-US');
+}
+
+function formatP(p) {
+  if (p < 0.0001) return p.toExponential(1);
+  if (p < 0.01) return p.toFixed(4);
+  return p.toFixed(3);
+}
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+var tooltipEl = cmById('cm-tooltip');
+function showTooltip(x, y, html) {
+  tooltipEl.innerHTML = html;
+  tooltipEl.classList.add('visible');
+  var r = tooltipEl.getBoundingClientRect();
+  var tx = x + 12, ty = y - 10;
+  if (tx + r.width > window.innerWidth - 10) tx = x - r.width - 12;
+  if (ty + r.height > window.innerHeight - 10) ty = y - r.height - 10;
+  if (ty < 5) ty = 5;
+  tooltipEl.style.left = tx + 'px';
+  tooltipEl.style.top = ty + 'px';
+}
+function hideTooltip() { tooltipEl.classList.remove('visible'); }
+
+/* ============================================================
+   ANIMATED COUNTERS
+   ============================================================ */
+function animateCounter(el, target, suffix, duration) {
+  suffix = suffix || '';
+  duration = duration || 1500;
+  var start = 0, startTime = null;
+  var isFloat = target % 1 !== 0;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    var ease = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    var current = start + (target - start) * ease;
+    if (isFloat) {
+      el.textContent = current.toFixed(1) + suffix;
+    } else {
+      el.textContent = formatNum(Math.round(current)) + suffix;
+    }
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ============================================================
+   DONUT CHART
+   ============================================================ */
+function drawDonut() {
+  var canvas = cmById('cm-donut');
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth - 48;
+  var h = 400;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var data = [
+    { label: 'Direct', value: CM_SUMMARY.contradictions.direct, color: COLORS.direct },
+    { label: 'Significance', value: CM_SUMMARY.contradictions.significance, color: COLORS.significance },
+    { label: 'Magnitude', value: CM_SUMMARY.contradictions.magnitude, color: COLORS.magnitude },
+    { label: 'No contradiction', value: CM_SUMMARY.contradictions.none, color: COLORS.none }
+  ];
+  var total = data.reduce(function(s, d) { return s + d.value; }, 0);
+  var cx = w / 2, cy = h / 2 - 10;
+  var outerR = Math.min(cx, cy) - 40;
+  var innerR = outerR * 0.55;
+
+  // Store segments for hover
+  var segments = [];
+  var angle = -Math.PI / 2;
+  for (var i = 0; i < data.length; i++) {
+    var slice = (data[i].value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, angle, angle + slice);
+    ctx.arc(cx, cy, innerR, angle + slice, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = data[i].color;
+    ctx.fill();
+
+    // Label
+    var midAngle = angle + slice / 2;
+    var labelR = outerR + 22;
+    var lx = cx + Math.cos(midAngle) * labelR;
+    var ly = cy + Math.sin(midAngle) * labelR;
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '600 13px "Segoe UI", sans-serif';
+    ctx.textAlign = Math.cos(midAngle) > 0 ? 'left' : 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(data[i].label + ' (' + data[i].value + ')', lx, ly);
+
+    segments.push({ startAngle: angle, endAngle: angle + slice, data: data[i] });
+    angle += slice;
+  }
+
+  // Center text
+  ctx.fillStyle = '#e8e8f0';
+  ctx.font = '800 28px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 8);
+  ctx.font = '500 13px "Segoe UI", sans-serif';
+  ctx.fillStyle = '#a0a0c0';
+  ctx.fillText('total pairs', cx, cy + 14);
+
+  // Hover
+  canvas.onmousemove = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = (e.clientX - rect.left), my = (e.clientY - rect.top);
+    var dx = mx - cx, dy = my - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < innerR || dist > outerR) { hideTooltip(); return; }
+    var a = Math.atan2(dy, dx);
+    if (a < -Math.PI / 2) a += Math.PI * 2;
+    for (var i = 0; i < segments.length; i++) {
+      var s = segments[i];
+      var sa = s.startAngle, ea = s.endAngle;
+      // Normalize
+      if (a >= sa && a <= ea) {
+        var pct = ((s.data.value / total) * 100).toFixed(1);
+        showTooltip(e.clientX, e.clientY,
+          '<strong style="color:' + s.data.color + '">' + s.data.label + '</strong><br>' +
+          s.data.value + ' pairs (' + pct + '%)');
+        return;
+      }
+    }
+    hideTooltip();
+  };
+  canvas.onmouseleave = hideTooltip;
+}
+
+/* ============================================================
+   TOP REVIEWS BAR CHART
+   ============================================================ */
+function drawTopReviews() {
+  var canvas = cmById('cm-bar-reviews');
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth - 48;
+  var h = 400;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var data = CM_SUMMARY.topReviews;
+  var maxVal = data[0][1];
+  var margin = { top: 20, right: 20, bottom: 60, left: 100 };
+  var chartW = w - margin.left - margin.right;
+  var chartH = h - margin.top - margin.bottom;
+  var barH = chartH / data.length - 4;
+
+  // Bars (horizontal)
+  var barRects = [];
+  for (var i = 0; i < data.length; i++) {
+    var barW = (data[i][1] / maxVal) * chartW;
+    var y = margin.top + i * (chartH / data.length) + 2;
+    var intensity = 1 - (i / data.length) * 0.5;
+    var r = Math.round(255 * intensity);
+    var g = Math.round(71 + (159 - 71) * (1 - intensity));
+    var b = Math.round(87 + (67 - 87) * (1 - intensity));
+    ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+    ctx.beginPath();
+    ctx.roundRect(margin.left, y, barW, barH, [0, 4, 4, 0]);
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '500 11px "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(data[i][0], margin.left - 8, y + barH / 2);
+
+    // Value
+    ctx.textAlign = 'left';
+    ctx.fillText(data[i][1], margin.left + barW + 6, y + barH / 2);
+
+    barRects.push({ x: margin.left, y: y, w: barW, h: barH, data: data[i] });
+  }
+
+  // Hover
+  canvas.onmousemove = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (var i = 0; i < barRects.length; i++) {
+      var b = barRects[i];
+      if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
+        showTooltip(e.clientX, e.clientY,
+          '<strong>' + b.data[0] + '</strong><br>' + b.data[1] + ' contradictions');
+        return;
+      }
+    }
+    hideTooltip();
+  };
+  canvas.onmouseleave = hideTooltip;
+}
+
+/* ============================================================
+   QUALITY BAR CHART
+   ============================================================ */
+function drawQualityBar() {
+  var canvas = cmById('cm-quality-bar');
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth - 48;
+  var h = 380;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var q = CM_SUMMARY.quality;
+  var groups = [
+    { label: 'CRITICAL flags', contradicted: q.contradicted_CRITICAL, noncontradicted: q.noncontradicted_CRITICAL },
+    { label: 'FAIL flags', contradicted: q.contradicted_FAIL, noncontradicted: q.noncontradicted_FAIL },
+    { label: 'WARN flags', contradicted: q.contradicted_WARN, noncontradicted: q.noncontradicted_WARN }
+  ];
+  var maxVal = Math.max.apply(null, groups.map(function(g) { return Math.max(g.contradicted, g.noncontradicted); }));
+  maxVal = Math.ceil(maxVal * 10) / 10 + 0.1;
+
+  var margin = { top: 30, right: 30, bottom: 80, left: 60 };
+  var chartW = w - margin.left - margin.right;
+  var chartH = h - margin.top - margin.bottom;
+  var groupW = chartW / groups.length;
+  var barW = groupW * 0.3;
+
+  // Y axis
+  ctx.strokeStyle = '#2a2a4a';
+  ctx.lineWidth = 1;
+  var nTicks = 5;
+  for (var t = 0; t <= nTicks; t++) {
+    var val = (maxVal / nTicks) * t;
+    var yy = margin.top + chartH - (val / maxVal) * chartH;
+    ctx.beginPath(); ctx.moveTo(margin.left, yy); ctx.lineTo(margin.left + chartW, yy); ctx.stroke();
+    ctx.fillStyle = '#a0a0c0';
+    ctx.font = '11px "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(val.toFixed(2), margin.left - 8, yy);
+  }
+
+  // Bars
+  var barRects = [];
+  for (var i = 0; i < groups.length; i++) {
+    var gx = margin.left + i * groupW + groupW / 2;
+
+    // Contradicted bar
+    var h1 = (groups[i].contradicted / maxVal) * chartH;
+    var x1 = gx - barW - 2;
+    var y1 = margin.top + chartH - h1;
+    ctx.fillStyle = COLORS.direct;
+    ctx.beginPath(); ctx.roundRect(x1, y1, barW, h1, [4, 4, 0, 0]); ctx.fill();
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '700 11px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(groups[i].contradicted.toFixed(3), x1 + barW / 2, y1 - 8);
+
+    // Non-contradicted bar
+    var h2 = (groups[i].noncontradicted / maxVal) * chartH;
+    var x2 = gx + 2;
+    var y2 = margin.top + chartH - h2;
+    ctx.fillStyle = COLORS.none;
+    ctx.beginPath(); ctx.roundRect(x2, y2, barW, h2, [4, 4, 0, 0]); ctx.fill();
+    ctx.fillStyle = '#e8e8f0';
+    ctx.fillText(groups[i].noncontradicted.toFixed(3), x2 + barW / 2, y2 - 8);
+
+    // Group label
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '600 12px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(groups[i].label, gx, margin.top + chartH + 20);
+
+    barRects.push(
+      { x: x1, y: y1, w: barW, h: h1, label: 'Contradicted: ' + groups[i].contradicted.toFixed(3) + ' mean ' + groups[i].label },
+      { x: x2, y: y2, w: barW, h: h2, label: 'Non-contradicted: ' + groups[i].noncontradicted.toFixed(3) + ' mean ' + groups[i].label }
+    );
+  }
+
+  // Legend
+  var legY = margin.top + chartH + 45;
+  ctx.fillStyle = COLORS.direct;
+  ctx.fillRect(w / 2 - 120, legY, 12, 12);
+  ctx.fillStyle = '#e8e8f0';
+  ctx.font = '500 12px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Contradicted (n=219)', w / 2 - 104, legY + 10);
+
+  ctx.fillStyle = COLORS.none;
+  ctx.fillRect(w / 2 + 40, legY, 12, 12);
+  ctx.fillStyle = '#e8e8f0';
+  ctx.fillText('Non-contradicted (n=5,060)', w / 2 + 56, legY + 10);
+
+  // Hover
+  canvas.onmousemove = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (var i = 0; i < barRects.length; i++) {
+      var b = barRects[i];
+      if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
+        showTooltip(e.clientX, e.clientY, b.label);
+        return;
+      }
+    }
+    hideTooltip();
+  };
+  canvas.onmouseleave = hideTooltip;
+}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+var tableState = {
+  filtered: CM_DATA.slice(),
+  sortCol: 12,
+  sortAsc: false,
+  page: 0,
+  perPage: 50
+};
+
+function filterAndSort() {
+  var search = cmById('cm-search').value.toLowerCase();
+  var typeFilter = cmById('cm-filter-type').value;
+
+  tableState.filtered = CM_DATA.filter(function(row) {
+    if (typeFilter !== 'all' && row[4] !== typeFilter) return false;
+    if (search) {
+      var haystack = (row[0] + ' ' + row[1] + ' ' + row[2] + ' ' + row[3] + ' ' + row[17] + ' ' + row[18]).toLowerCase();
+      if (haystack.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+
+  var col = tableState.sortCol;
+  var asc = tableState.sortAsc;
+  tableState.filtered.sort(function(a, b) {
+    var va = a[col], vb = b[col];
+    if (typeof va === 'string') {
+      va = va.toLowerCase(); vb = vb.toLowerCase();
+    }
+    if (va < vb) return asc ? -1 : 1;
+    if (va > vb) return asc ? 1 : -1;
+    return 0;
+  });
+
+  tableState.page = 0;
+  renderTable();
+}
+
+function renderTable() {
+  var data = tableState.filtered;
+  var start = tableState.page * tableState.perPage;
+  var end = Math.min(start + tableState.perPage, data.length);
+  var tbody = cmById('cm-tbody');
+  var html = '';
+
+  for (var i = start; i < end; i++) {
+    var row = data[i];
+    var typeClass = 'cm-type-' + row[4];
+    html += '<tr>' +
+      '<td>' + escapeHtml(row[0]) + '</td>' +
+      '<td>' + escapeHtml(row[1]) + '</td>' +
+      '<td><span class="cm-type-badge ' + typeClass + '">' + row[4] + '</span></td>' +
+      '<td>' + row[5].toFixed(4) + '</td>' +
+      '<td>' + row[6].toFixed(4) + '</td>' +
+      '<td>' + formatP(row[7]) + '</td>' +
+      '<td>' + formatP(row[8]) + '</td>' +
+      '<td>' + row[11] + '</td>' +
+      '<td>' + row[12].toFixed(4) + '</td>' +
+      '<td>' + escapeHtml(row[17]) + '</td>' +
+      '<td>' + escapeHtml(row[18]) + '</td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
+
+  cmById('cm-row-count').textContent = 'Showing ' + (data.length === 0 ? 0 : start + 1) + '-' + end + ' of ' + data.length;
+
+  // Pagination
+  var totalPages = Math.ceil(data.length / tableState.perPage);
+  var pagDiv = cmById('cm-pagination');
+  var pagHtml = '';
+  if (totalPages > 1) {
+    pagHtml += '<button ' + (tableState.page === 0 ? 'disabled' : '') + ' onclick="tableState.page--;renderTable()">Prev</button>';
+    for (var p = 0; p < totalPages; p++) {
+      if (totalPages > 10 && Math.abs(p - tableState.page) > 2 && p !== 0 && p !== totalPages - 1) {
+        if (p === 1 || p === totalPages - 2) pagHtml += '<button disabled>...</button>';
+        continue;
+      }
+      pagHtml += '<button class="' + (p === tableState.page ? 'active' : '') + '" onclick="tableState.page=' + p + ';renderTable()">' + (p + 1) + '</button>';
+    }
+    pagHtml += '<button ' + (tableState.page >= totalPages - 1 ? 'disabled' : '') + ' onclick="tableState.page++;renderTable()">Next</button>';
+  }
+  pagDiv.innerHTML = pagHtml;
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Sort headers
+cmById('cm-data-table').querySelector('thead').addEventListener('click', function(e) {
+  var th = e.target.closest('th');
+  if (!th) return;
+  var col = parseInt(th.getAttribute('data-col'));
+  if (tableState.sortCol === col) {
+    tableState.sortAsc = !tableState.sortAsc;
+  } else {
+    tableState.sortCol = col;
+    tableState.sortAsc = true;
+  }
+  // Update arrows
+  var ths = th.parentElement.querySelectorAll('th');
+  ths.forEach(function(t) { t.querySelector('.cm-sort-arrow').textContent = ''; });
+  th.querySelector('.cm-sort-arrow').textContent = tableState.sortAsc ? ' ^' : ' v';
+  filterAndSort();
+});
+
+cmById('cm-search').addEventListener('input', filterAndSort);
+cmById('cm-filter-type').addEventListener('change', filterAndSort);
+
+/* ============================================================
+   CHORD DIAGRAM
+   ============================================================ */
+function drawChord() {
+  var canvas = cmById('cm-chord');
+  var dpr = window.devicePixelRatio || 1;
+  var size = Math.min(canvas.parentElement.clientWidth - 32, 700);
+  canvas.width = size * dpr; canvas.height = size * dpr;
+  canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var nodes = CM_CHORD_NODES;
+  var edges = CM_CHORD_EDGES;
+  var n = nodes.length;
+  var cx = size / 2, cy = size / 2;
+  var R = size / 2 - 70;
+  var nodeR = 6;
+
+  // Build node index
+  var nodeIdx = {};
+  for (var i = 0; i < n; i++) nodeIdx[nodes[i][0]] = i;
+
+  // Position nodes around circle
+  var positions = [];
+  for (var i = 0; i < n; i++) {
+    var angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    positions.push({
+      x: cx + Math.cos(angle) * R,
+      y: cy + Math.sin(angle) * R,
+      angle: angle,
+      id: nodes[i][0],
+      count: nodes[i][1]
+    });
+  }
+
+  // Draw arcs
+  for (var i = 0; i < edges.length; i++) {
+    var edge = edges[i];
+    var i1 = nodeIdx[edge[0]], i2 = nodeIdx[edge[1]];
+    if (i1 === undefined || i2 === undefined) continue;
+    var p1 = positions[i1], p2 = positions[i2];
+    var thickness = Math.max(1, Math.min(edge[3] / 8, 12));
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    // Quadratic bezier through center area
+    var cpx = cx + (p1.x + p2.x - 2 * cx) * 0.15;
+    var cpy = cy + (p1.y + p2.y - 2 * cy) * 0.15;
+    ctx.quadraticCurveTo(cpx, cpy, p2.x, p2.y);
+    ctx.strokeStyle = COLORS[edge[2]];
+    ctx.lineWidth = thickness;
+    ctx.globalAlpha = 0.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw nodes
+  for (var i = 0; i < n; i++) {
+    var p = positions[i];
+    var nodeSize = Math.max(4, Math.min(p.count / 10, 14));
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, nodeSize + 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,212,255,0.15)';
+    ctx.fill();
+
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, nodeSize, 0, Math.PI * 2);
+    ctx.fillStyle = '#00d4ff';
+    ctx.fill();
+    ctx.strokeStyle = '#1a1a2e';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    var labelR = R + 22;
+    var lx = cx + Math.cos(p.angle) * labelR;
+    var ly = cy + Math.sin(p.angle) * labelR;
+    ctx.save();
+    ctx.translate(lx, ly);
+    var labelAngle = p.angle;
+    if (labelAngle > Math.PI / 2 && labelAngle < Math.PI * 1.5) {
+      labelAngle += Math.PI;
+      ctx.rotate(labelAngle);
+      ctx.textAlign = 'right';
+    } else {
+      ctx.rotate(labelAngle);
+      ctx.textAlign = 'left';
+    }
+    ctx.fillStyle = '#a0a0c0';
+    ctx.font = '500 10px "Segoe UI", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.id + ' (' + p.count + ')', 0, 0);
+    ctx.restore();
+  }
+
+  // Hover
+  canvas.onmousemove = function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (var i = 0; i < positions.length; i++) {
+      var p = positions[i];
+      var dx = mx - p.x, dy = my - p.y;
+      if (dx * dx + dy * dy < 200) {
+        // Find edges for this node
+        var conns = [];
+        for (var j = 0; j < edges.length; j++) {
+          if (edges[j][0] === p.id || edges[j][1] === p.id) {
+            var other = edges[j][0] === p.id ? edges[j][1] : edges[j][0];
+            conns.push(other + ': ' + edges[j][3] + ' ' + edges[j][2]);
+          }
+        }
+        showTooltip(e.clientX, e.clientY,
+          '<strong>' + p.id + '</strong><br>' +
+          p.count + ' total contradictions' +
+          (conns.length ? '<br><br>' + conns.join('<br>') : ''));
+        return;
+      }
+    }
+    hideTooltip();
+  };
+  canvas.onmouseleave = hideTooltip;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function cmInit() {
+  // Animated counters
+  animateCounter(cmById('cm-hero-pct'), 48.9, '%', 2000);
+  animateCounter(cmById('cm-card-mas'), 5279, '', 1500);
+  animateCounter(cmById('cm-card-pairs'), 881, '', 1500);
+  animateCounter(cmById('cm-card-contra'), 431, '', 1500);
+  animateCounter(cmById('cm-card-rate'), 48.9, '%', 1800);
+
+  // Charts
+  drawDonut();
+  drawTopReviews();
+  drawQualityBar();
+  drawChord();
+
+  // Table
+  filterAndSort();
+}
+
+// Resize handler
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    drawDonut();
+    drawTopReviews();
+    drawQualityBar();
+    drawChord();
+  }, 200);
+});
+
+// Start
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', cmInit);
+} else {
+  setTimeout(cmInit, 50);
+}
+</script>
+</body>
+</html>
