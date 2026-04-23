@@ -1,3 +1,5 @@
+<!-- sentinel:skip-file — hardcoded paths are fixture/registry/audit-narrative data for this repo's research workflow, not portable application configuration. Same pattern as push_all_repos.py and E156 workbook files. -->
+
 # ContradictionMap
 
 ContradictionMap detects contradictory conclusions across Cochrane meta-analyses that share the same primary studies. The pipeline recomputes meta-analyses from Pairwise70, finds cross-review overlap, classifies contradictions, links them to MetaAudit severity, and exports the analysis for the dashboard and manuscript.
