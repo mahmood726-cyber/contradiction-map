@@ -31,15 +31,29 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-# Import MetaAudit's loader and recompute engine
-sys.path.insert(0, "C:/MetaAudit")
-from metaaudit.loader import (  # noqa: E402
-    DataType,
-    load_all_reviews,
-    load_rda_file,
-    split_by_analysis,
-)
-from metaaudit.recompute import recompute_ma  # noqa: E402
+# MetaAudit's loader and recompute engine are imported lazily inside the
+# phase that actually needs them (phase1_build_membership). The pure
+# functions in this module (normalization, overlap detection, contradiction
+# classification) and their tests do not require MetaAudit, so importing it at
+# module load time would needlessly hard-fail on machines where MetaAudit is
+# not installed.
+def _import_metaaudit():
+    """Import MetaAudit's loader + recompute engine, on demand.
+
+    Raises a clear ImportError if MetaAudit is not available on this machine.
+    """
+    sys.path.insert(0, "C:/MetaAudit")
+    try:
+        from metaaudit.loader import load_all_reviews  # noqa: E402
+        from metaaudit.recompute import recompute_ma  # noqa: E402
+    except ImportError as e:
+        raise ImportError(
+            "ContradictionMap's data-loading phase requires the MetaAudit "
+            "package (expected under C:/MetaAudit). Install/locate MetaAudit "
+            "to run the full pipeline; the pure-Python classification "
+            "functions and their tests do not need it."
+        ) from e
+    return load_all_reviews, recompute_ma
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -109,6 +123,7 @@ def phase1_build_membership(max_reviews: int | None = None,
     print(f"[Phase 1] Loading reviews from {PAIRWISE70_DIR}")
     t0 = time.time()
 
+    load_all_reviews, recompute_ma = _import_metaaudit()
     reviews = load_all_reviews(str(PAIRWISE70_DIR), max_reviews=max_reviews)
     print(f"  Loaded {len(reviews)} reviews in {time.time() - t0:.1f}s")
 
